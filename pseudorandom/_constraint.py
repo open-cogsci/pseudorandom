@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pseudorandom._exceptions import InvalidConstraint
+
 class Constraint(object):
 
 	def __init__(self, ldf, **kwargs):
@@ -47,6 +49,8 @@ class MaxRep(Constraint):
 
 	def init(self, cols=None, maxRep=1):
 
+		if maxRep < 1:
+			raise InvalidConstraint(u'maxRep should be >= 1')
 		self.maxRep = maxRep
 		self.cols = self.df.getCols(cols)
 
@@ -80,6 +84,8 @@ class MinDist(Constraint):
 
 	def init(self, cols=None, minDist=2):
 
+		if minDist < 2:
+			raise InvalidConstraint(u'minDist should be >= 2')
 		self.minDist = minDist
 		self.cols = self.df.getCols(cols)
 

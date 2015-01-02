@@ -59,4 +59,5 @@ __version__ = u'0.1.0'
 from pseudorandom._dataframe import DataFrame
 from pseudorandom._enforce import Enforce
 from pseudorandom._constraint import MaxRep, MinDist
+from pseudorandom._exceptions import EnforceFailed, InvalidConstraint
 from pseudorandom import tools

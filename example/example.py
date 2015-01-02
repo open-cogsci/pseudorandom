@@ -9,7 +9,9 @@ print(df)
 # Create an Enforce object, and add two constraints
 ef = Enforce(df)
 ef.addConstraint(MaxRep, cols='category', maxRep=1)
-ef.addConstraint(MinDist, cols='word', minDist=3)
+ef.addConstraint(MinDist, cols='word', minDist=4)
 # Enforce the constraints
 df = ef.enforce()
+# See the resulting DataFrame and a report of how long the enforcement took.
 print(df)
+print(ef.report)

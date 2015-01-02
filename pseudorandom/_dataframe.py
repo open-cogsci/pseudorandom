@@ -19,6 +19,7 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
 import copy
+import itertools
 from collections import OrderedDict
 from pseudorandom.py3compat import _basestring, _unicode, py3
 
@@ -61,6 +62,19 @@ class DataFrame(object):
 		for col in self.data:
 			self.data[col] = [default]*rows
 
+	def __eq__(self, other):
+
+		if not isinstance(other, DataFrame) or self.cells != other.cells:
+			return False
+		for row, col in self.cells:
+			if self[row, col] != other[row, col]:
+				return False
+		return True
+
+	def __iter__(self):
+
+		return DataFrameIterator(self)
+
 	def __getitem__(self, key):
 
 		"""
@@ -75,10 +89,29 @@ class DataFrame(object):
 				type:	[str, slice, int, tuple]
 
 		example: |
+			# Getting a DataFrame that is a subset of the current DataFrame:
+			#
+			# Print the first row
 			print(df[0])
+			# Print the first two rows
 			print(df[0:2])
+			# Print the row column
 			print(df['word'])
+			# Print the first two rows of the word column
 			print(df['word', 0:2])
+
+			# Getting a single cell:
+			#
+			# Print the cell that corresponds to the first row in the word
+			# column.
+			print(df['word', 0])
+
+			# You can even slice the cells in the DataFrame, by passing a third
+			# slice. Note that this will fail if some cells cannot be sliced,
+			# for example because they are integers.
+			#
+			# Getting the first two characters from all rows in the word column.
+			print(df['word', :, :2])
 
 		returns:
 			desc:	A new `DataFrame` that is a subset of the current
@@ -92,9 +125,18 @@ class DataFrame(object):
 		if isinstance(key, _basestring):
 			df = self.copy()
 			return df.selectCols(key)
-		if isinstance(key, tuple) and len(key) == 2:
-			key1, key2 = key
-			return self[key1][key2]
+		if isinstance(key, tuple):
+			if len(key) == 2:
+				key1, key2 = key
+				if isinstance(key1, basestring) and isinstance(key2, int):
+					return self.data[key1][key2]
+				if isinstance(key2, basestring) and isinstance(key1, int):
+					return self.data[key2][key1]
+				return self[key1][key2]
+			if len(key) == 3:
+				key1, key2, key3 = key
+				df = self[(key1, key2)]
+				return df.sliceValues(key3)
 		if isinstance(key, slice):
 			if key.start is None:
 				start = 0
@@ -129,6 +171,10 @@ class DataFrame(object):
 
 		return len(list(self.data.values())[0])
 
+	def __ne__(self, other):
+
+		return not self == other
+
 	def __setitem__(self, key, val):
 
 		"""
@@ -138,15 +184,18 @@ class DataFrame(object):
 		arguments:
 			key:
 				desc:	The element to get. This can be `int` for rows, `str`
-						for columns, or a `tuple` to get a specific cell.
+						for columns, or a `tuple` to set a specific cell.
 				type:	[str, int, tuple]
 			val:
 				desc:	The value to set. This should be a list when setting an
 						entire column or row.
 
 		example: |
+			# Set the word column
 			df['word'] = ['cat', 'dog', 'mouse']
+			# Set the first row
 			df[0] = ['cat', 10]
+			# Set the cell that corresponds to the first row in the word column.
 			df['word', 0] = 'cat'
 		"""
 
@@ -167,7 +216,7 @@ class DataFrame(object):
 		if isinstance(key, _basestring):
 			if len(val) != len(self):
 				raise Exception(u'Non-matching length for %s' % val)
-			self.data[key] = val
+			self.data[key] = list(val)
 			return
 		raise Exception(u'Invalid key: %s' % key)
 
@@ -198,6 +247,18 @@ class DataFrame(object):
 		matrix = [u'='*max_len] + matrix[:1] + [u'-'*max_len] + matrix[1:] \
 			+ [u'='*max_len]
 		return _unicode(u'\n'.join(matrix))
+
+	@property
+	def cells(self):
+
+		"""
+		name:		cells
+		returns:
+			desc:	A list of all col, row combinations.
+			type:	list
+		"""
+
+		return list(itertools.product(self.cols, self.range))
 
 	@property
 	def cols(self):
@@ -297,6 +358,12 @@ class DataFrame(object):
 			self.data[col] = rcol
 		return self
 
+	def sliceValues(self, _slice):
+
+		for col, row in self.cells:
+			self[col, row] = self[col, row][_slice]
+		return self
+
 	def sort(self, cols=None, key=None):
 
 		"""
@@ -384,5 +451,23 @@ class DataFrame(object):
 			else:
 				self.data[col][i1], self.data[col][i2], self.data[col][i3] = \
 					self.data[col][i2], self.data[col][i3], self.data[col][i1]
+
+class DataFrameIterator(object):
+
+	def __init__(self, df):
+		self.df = df
+		self.i = 0
+		self.__next__ = self.next
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		if self.i >= len(self.df):
+			raise StopIteration
+		self.i += 1
+		if len(self.df.cols) == 1:
+			return self.df[self.df.cols[0], self.i - 1]
+		return self.df[self.i - 1]
 
 random.seed()

@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import time
 import random
 import itertools
 from pseudorandom.py3compat import *
+from pseudorandom._exceptions import EnforceFailed
 
 class Enforce(object):
 
@@ -43,6 +45,7 @@ class Enforce(object):
 
 		self.df = df.copy()
 		self.constraints = []
+		self.report = None
 
 	def addConstraint(self, constraint, **kwargs):
 
@@ -80,7 +83,7 @@ class Enforce(object):
 				for heapRow in heapRange:
 					_df = self.df.copy()
 					self.df.swapRows(row, heapRow)
-					if self.ok(row) and self.ok(heapRow):
+					if self.ok(row):
 						break
 					self.df.data = _df.data
 		return redo
@@ -102,17 +105,28 @@ class Enforce(object):
 			type:	DataFrame
 		"""
 
+		t0 = time.time()
 		reverse = False
-		for i in range(maxPass):
-			redo = self._enforce(reverse=reverse)
-			if not redo:
-				break
-			reverse = not reverse
-		else:
-			if maxReshuffle == 0:
-				raise Exception(u'Failed to enforce constraints')
+		for i in range(maxReshuffle):
 			self.df.shuffle()
-			self.enforce(maxReshuffle=maxReshuffle-1, maxPass=maxPass)
+			for j in range(maxPass):
+				if not self._enforce(reverse=reverse):
+					break
+				reverse = not reverse
+			else:
+				# If the maximum passes were exhausted, restart the loop
+				continue
+			# If the maximum passes were not exhausted, we are done
+			break
+		else:
+			raise EnforceFailed(
+				u'Failed to enforce constraints (maxReshuffle = %d)' \
+				% maxReshuffle)
+		t1 = time.time()
+		self.report = {
+			u'time'			: t1-t0,
+			u'reshuffle'	: i+1,
+			}
 		return self.df
 
 	def ok(self, row):
