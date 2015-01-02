@@ -13,6 +13,8 @@ v0.1.0
 This is particularly useful for generating condition/ stimulus lists for
 psychological and neuroscientific experiments.
 
+Build status: [![Build Status](https://travis-ci.org/smathot/python-pseudorandom.svg?branch=master)](https://travis-ci.org/smathot/python-pseudorandom)
+
 ## Example
 
 ~~~ .python
@@ -26,8 +28,8 @@ df = tools.fromPandas(pdf)
 print(df)
 # Create an Enforce object, and add two constraints
 ef = Enforce(df)
-#ef.addConstraint(MaxRep, cols='category', maxRep=1)
-ef.addConstraint(MinDist, cols='word', minDist=3)
+ef.addConstraint(MaxRep, cols='category', maxRep=1)
+ef.addConstraint(MinDist, cols='word', minDist=4)
 # Enforce the constraints
 df = ef.enforce()
 # See the resulting DataFrame and a report of how long the enforcement took.

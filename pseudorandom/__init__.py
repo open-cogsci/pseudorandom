@@ -28,6 +28,8 @@ desc: |
 	This is particularly useful for generating condition/ stimulus lists for
 	psychological and neuroscientific experiments.
 
+	Current unittest status: [![Build Status](https://travis-ci.org/smathot/python-pseudorandom.svg?branch=master)](https://travis-ci.org/smathot/python-pseudorandom)
+
 	## Example
 
 	~~~ .python
