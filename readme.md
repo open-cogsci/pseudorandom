@@ -26,11 +26,13 @@ df = tools.fromPandas(pdf)
 print(df)
 # Create an Enforce object, and add two constraints
 ef = Enforce(df)
-ef.addConstraint(MaxRep, cols='category', maxRep=1)
+#ef.addConstraint(MaxRep, cols='category', maxRep=1)
 ef.addConstraint(MinDist, cols='word', minDist=3)
 # Enforce the constraints
 df = ef.enforce()
+# See the resulting DataFrame and a report of how long the enforcement took.
 print(df)
+print(ef.report)
 
 ~~~
 
@@ -57,6 +59,7 @@ included file `COPYING` for details or visit
 	- [function __pseudorandom\.DataFrame\.\_\_init\_\___\(cols, rows, default=u''\)](#function-__pseudorandomdataframe__init____cols-rows-defaultu)
 	- [function __pseudorandom\.DataFrame\.\_\_len\_\___\(\)](#function-__pseudorandomdataframe__len____)
 	- [function __pseudorandom\.DataFrame\.\_\_setitem\_\___\(key, val\)](#function-__pseudorandomdataframe__setitem____key-val)
+	- [property __pseudorandom.DataFrame.cells__](#property-__pseudorandomdataframecells__)
 	- [property __pseudorandom.DataFrame.cols__](#property-__pseudorandomdataframecols__)
 	- [function __pseudorandom\.DataFrame\.copy__\(\)](#function-__pseudorandomdataframecopy__)
 	- [property __pseudorandom.DataFrame.range__](#property-__pseudorandomdataframerange__)
@@ -90,10 +93,29 @@ Implements the get operator.
 __Example:__
 
 ~~~ .python
+# Getting a DataFrame that is a subset of the current DataFrame:
+#
+# Print the first row
 print(df[0])
+# Print the first two rows
 print(df[0:2])
+# Print the row column
 print(df['word'])
+# Print the first two rows of the word column
 print(df['word', 0:2])
+
+# Getting a single cell:
+#
+# Print the cell that corresponds to the first row in the word
+# column.
+print(df['word', 0])
+
+# You can even slice the cells in the DataFrame, by passing a third
+# slice. Note that this will fail if some cells cannot be sliced,
+# for example because they are integers.
+#
+# Getting the first two characters from all rows in the word column.
+print(df['word', :, :2])
 ~~~
 
 __Arguments:__
@@ -170,14 +192,17 @@ Implements the assignment operator.
 __Example:__
 
 ~~~ .python
+# Set the word column
 df['word'] = ['cat', 'dog', 'mouse']
+# Set the first row
 df[0] = ['cat', 10]
+# Set the cell that corresponds to the first row in the word column.
 df['word', 0] = 'cat'
 ~~~
 
 __Arguments:__
 
-- `key` -- The element to get. This can be `int` for rows, `str` for columns, or a `tuple` to get a specific cell.
+- `key` -- The element to get. This can be `int` for rows, `str` for columns, or a `tuple` to set a specific cell.
 	- Type: str, int, tuple
 - `val` -- The value to set. This should be a list when setting an entire column or row.
 
@@ -186,6 +211,18 @@ __Arguments:__
 [pseudorandom.DataFrame.__setitem__]: #pseudorandom-DataFrame-__setitem__
 [DataFrame.__setitem__]: #pseudorandom-DataFrame-__setitem__
 [__setitem__]: #pseudorandom-DataFrame-__setitem__
+
+<span class="PropertyDoc YAMLDoc" id="pseudorandom-DataFrame-cells" markdown="1">
+
+### property __pseudorandom.DataFrame.cells__
+
+No description specified.
+
+</span>
+
+[pseudorandom.DataFrame.cells]: #pseudorandom-DataFrame-cells
+[DataFrame.cells]: #pseudorandom-DataFrame-cells
+[cells]: #pseudorandom-DataFrame-cells
 
 <span class="PropertyDoc YAMLDoc" id="pseudorandom-DataFrame-cols" markdown="1">
 
@@ -495,6 +532,7 @@ A pseudorandom DataFrame.
 [function __pseudorandom\.DataFrame\.\_\_init\_\___\(cols, rows, default=u''\)]: #function-__pseudorandomdataframe__init____cols-rows-defaultu
 [function __pseudorandom\.DataFrame\.\_\_len\_\___\(\)]: #function-__pseudorandomdataframe__len____
 [function __pseudorandom\.DataFrame\.\_\_setitem\_\___\(key, val\)]: #function-__pseudorandomdataframe__setitem____key-val
+[property __pseudorandom.DataFrame.cells__]: #property-__pseudorandomdataframecells__
 [property __pseudorandom.DataFrame.cols__]: #property-__pseudorandomdataframecols__
 [function __pseudorandom\.DataFrame\.copy__\(\)]: #function-__pseudorandomdataframecopy__
 [property __pseudorandom.DataFrame.range__]: #property-__pseudorandomdataframerange__
