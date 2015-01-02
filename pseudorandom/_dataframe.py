@@ -128,9 +128,9 @@ class DataFrame(object):
 		if isinstance(key, tuple):
 			if len(key) == 2:
 				key1, key2 = key
-				if isinstance(key1, basestring) and isinstance(key2, int):
+				if isinstance(key1, _basestring) and isinstance(key2, int):
 					return self.data[key1][key2]
-				if isinstance(key2, basestring) and isinstance(key1, int):
+				if isinstance(key2, _basestring) and isinstance(key1, int):
 					return self.data[key2][key1]
 				return self[key1][key2]
 			if len(key) == 3:
@@ -150,7 +150,7 @@ class DataFrame(object):
 				step = 1
 			else:
 				step = key.step
-			_range = range(start, stop, step)
+			_range = list(range(start, stop, step))
 			df = self.copy()
 			return df.selectRows(_range)
 		raise Exception(u'Invalid key: %s' % key)
@@ -310,7 +310,7 @@ class DataFrame(object):
 	def getRows(self, rows):
 
 		if rows is None:
-			rows = range(len(self))
+			rows = list(range(len(self)))
 		elif isinstance(rows, int):
 			rows = [rows]
 		elif not isinstance(rows, list):
@@ -452,15 +452,18 @@ class DataFrame(object):
 				self.data[col][i1], self.data[col][i2], self.data[col][i3] = \
 					self.data[col][i2], self.data[col][i3], self.data[col][i1]
 
-class DataFrameIterator(object):
+class DataFrameIterator:
 
 	def __init__(self, df):
 		self.df = df
 		self.i = 0
-		self.__next__ = self.next
 
 	def __iter__(self):
 		return self
+
+	def __next__(self):
+		# For Python 3
+		return self.next()
 
 	def next(self):
 		if self.i >= len(self.df):

@@ -20,6 +20,7 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from pseudorandom import tools, DataFrame, Enforce, MaxRep, MinDist
+from pseudorandom.py3compat import _basestring
 import pandas as pd
 
 class PseudoRandomTest(unittest.TestCase):
@@ -43,7 +44,7 @@ class PseudoRandomTest(unittest.TestCase):
 		self.assertTrue(self.df['word', :4] != self.df['category'][:4])
 		# Check whether the correct DataTypes are returned
 		self.assertTrue(isinstance(self.df['word', 0:1], DataFrame))
-		self.assertTrue(isinstance(self.df['word', 0], basestring))
+		self.assertTrue(isinstance(self.df['word', 0], _basestring))
 		# Test iterator
 		self.assertTrue(list(self.df['word', :4]) == 4*['cat'])
 		# Test cell slicing
