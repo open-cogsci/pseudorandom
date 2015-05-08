@@ -21,7 +21,7 @@ import random
 import copy
 import itertools
 from collections import OrderedDict
-from pseudorandom.py3compat import _basestring, _unicode, py3
+from dataframe.py3compat import _basestring, _unicode, py3
 
 class DataFrame(object):
 
@@ -33,7 +33,8 @@ class DataFrame(object):
 		only the Python core libraries are available.
 	"""
 
-	def __init__(self, cols, rows, default=u''):
+	def __init__(self, cols, rows, default=u'', colValidator=None,
+		cellValidator=None):
 
 		"""
 		desc:
@@ -59,8 +60,12 @@ class DataFrame(object):
 		if not isinstance(rows, int):
 			raise Exception(u'rows must be integer')
 		self.data = OrderedDict.fromkeys(cols)
+		self._len = rows
+		self.default = default
+		self.colValidator = colValidator
+		self.cellValidator = cellValidator
 		for col in self.data:
-			self.data[col] = [default]*rows
+			self.data[col] = self.emptyCol()
 
 	def __eq__(self, other):
 
@@ -74,6 +79,52 @@ class DataFrame(object):
 	def __iter__(self):
 
 		return DataFrameIterator(self)
+
+	def __contains__(self, key):
+
+		if isinstance(key, int):
+			return key in self.range
+		return key in self.data
+
+	def insert(self, key, index=-1):
+
+		if isinstance(key, int):
+			for col in self.cols:
+				if key == -1:
+					self.data[col].append(self.default)
+				elif key < 0:
+					self.data[col].insert(key+1, self.default)
+				else:
+					self.data[col].insert(key, self.default)
+			self._len += 1
+			return
+		if index < 0:
+			nPop = -index-1
+		else:
+			nPop = len(self.cols)-index
+		nPop = min(len(self.cols), nPop)
+		l = []
+		for i in range(nPop):
+			l.append(self.data.popitem())
+		self.data[key] = self.emptyCol()
+		for key, val in l[::-1]:
+			self.data[key] = val
+
+	def __delitem__(self, key):
+
+		# Delete row
+		if isinstance(key, int):
+			if key < 0 or key >= len(self):
+				raise Exception(u'Row %s does not exist' % key)
+			for col in self.cols:
+				self.data[col].pop(key)
+			self._len -= 1
+			return
+		if isinstance(key, _basestring):
+			# Delete column
+			if not key in self:
+				raise Exception(u'Column %s does not exist' % key)
+			del self.data[key]
 
 	def __getitem__(self, key):
 
@@ -169,7 +220,7 @@ class DataFrame(object):
 			type:	int
 		"""
 
-		return len(list(self.data.values())[0])
+		return self._len
 
 	def __ne__(self, other):
 
@@ -202,23 +253,42 @@ class DataFrame(object):
 		if isinstance(key, tuple) and len(key) == 2:
 			key1, key2 = key
 			if isinstance(key1, _basestring) and isinstance(key2, int):
-				self.data[key1][key2] = val
+				self.setCell((key1, key2), val)
 				return
 			if isinstance(key2, _basestring) and isinstance(key1, int):
-				self.data[key2][key1] = val
+				self.setCell((key2, key1), val)
 				return
 		if isinstance(key, int):
+			if isinstance(val, DataFrame):
+				if val.cols != self.cols:
+					raise Exception(u'Non-matching columns for %s' % val)
+				if len(val) != 1:
+					raise Exception(u'Can only assign DataFrames of length 1')
+				for col in self.cols:
+					self.setCell((col, key), val[col, 0])
+				return
 			if len(val) != len(self.cols):
 				raise Exception(u'Non-matching length for %s' % val)
 			for col in self.cols:
-				self.data[col][key] = val[key]
+				self.setCell((col, key), val[key])
 			return
 		if isinstance(key, _basestring):
 			if len(val) != len(self):
 				raise Exception(u'Non-matching length for %s' % val)
-			self.data[key] = list(val)
+			self.setCell(key, list(val))
 			return
 		raise Exception(u'Invalid key: %s' % key)
+
+	def setCell(self, key, val):
+
+		if self.cellValidator is not None and not self.cellValidator(val):
+			raise Exception(u'"%d" is not a valid value' % val)
+		if isinstance(key, tuple) and len(key) == 2:
+			self.data[key[0]][key[1]] = val
+		elif isinstance(key, _basestring):
+			self.data[key] = val
+		else:
+			raise Exception(u'Invalid key: %s' % key)
 
 	def __repr__(self):
 		return self.__unicode__()
@@ -266,8 +336,8 @@ class DataFrame(object):
 		"""
 		name:		cols
 		returns:
-			desc:	The number of columns.
-			type:	int
+			desc:	A list of collum names
+			type:	list
 		"""
 
 		return list(self.data.keys())
@@ -292,7 +362,10 @@ class DataFrame(object):
 				type:	DataFrame
 		"""
 
-		return copy.deepcopy(self)
+		df = DataFrame(self.cols, len(self), default=self.default,
+			colValidator=self.colValidator, cellValidator=self.cellValidator)
+		df.data = copy.deepcopy(self.data)
+		return df
 
 	def getCols(self, cols):
 
@@ -330,6 +403,7 @@ class DataFrame(object):
 		keep_rows = self.getRows(rows)
 		for col in self.cols:
 			self.data[col] = [self.data[col][i] for i in keep_rows]
+		self._len = len(keep_rows)
 		return self
 
 	def shuffle(self, cols=None):
@@ -451,6 +525,31 @@ class DataFrame(object):
 			else:
 				self.data[col][i1], self.data[col][i2], self.data[col][i3] = \
 					self.data[col][i2], self.data[col][i3], self.data[col][i1]
+
+	def swapCols(self, col1, col2):
+
+		self.rename(col1, '__tmp__')
+		self.rename(col2, col1)
+		self.rename('__tmp__', col2)
+
+		tmp = self[col1]
+		self[col1] = self[col2]
+		self[col2] = tmp
+
+	def rename(self, oldKey, newKey):
+
+		if oldKey not in self:
+			raise Exception(u'Column "%s" does not exist' % oldKey)
+		if newKey in self:
+			raise Exception(u'Column "%s" already exists' % newKey)
+		if self.colValidator is not None and not self.colValidator(newKey):
+			raise Exception(u'"%s" is not a valid column name' % newKey)
+		self.data = OrderedDict(
+			(newKey if k == oldKey else k, v) for k, v in self.data.items())
+
+	def emptyCol(self):
+
+		return [self.default]*len(self)
 
 class DataFrameIterator:
 

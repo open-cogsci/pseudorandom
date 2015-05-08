@@ -20,30 +20,41 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 desc: |
 	Copyright 2015 Sebastiaan Mathôt
 
-	v%-- python: "import pseudorandom; print pseudorandom.__version__" --%
+	v%-- python: "import dataframe; print dataframe.__version__" --%
 
 	<http://www.cogsci.nl/smathot>
 
-	`pseudorandom` is a library for generating constrained, pseudorandom matrices.
-	This is particularly useful for generating condition/ stimulus lists for
+	- `dataframe.DataFrame` is a simple class for tabular data, i.e. data that
+	is organized as numbered rows and named columns.
+	- `qdataframe.QDataFrame` is a PyQt widget for viewing and manipulating a
+	`dataframe.DataFrame`.
+	- `qdataframe.Enforce` provides functionality for pseudorandomization. This
+	is particularly useful for generating condition/ stimulus lists for
 	psychological and neuroscientific experiments.
 
 	Current unittest status: [![Build Status](https://travis-ci.org/smathot/python-pseudorandom.svg?branch=master)](https://travis-ci.org/smathot/python-pseudorandom)
 
-	## Example
+	## Example 1: Creating and viewing a DataFrame
 
 	~~~ .python
-	%-- include: "example/example.py" --%
+	%-- include: "examples/example-basic.py" --%
+	~~~
+
+	## Example 2: Pseudorandomization
+
+	~~~ .python
+	%-- include: "examples/example-pseudorandomization.py" --%
 	~~~
 
 	## Dependencies
 
-	`pseudorandom` requires only the Python standard library. Python 2.X and
-	Python >= 3.3 are supported.
+	`dataframe` requires only the Python standard library. Python 2.X and
+	Python >= 3.3 are supported. `qdataframe` is compatible with PyQt4 and
+	PyQt5.
 
 	## License
 
-	`pseudorandom` is released under the GNU General Public License 3. See the
+	`datafrane` is released under the GNU General Public License 3. See the
 	included file `COPYING` for details or visit
 	<http://www.gnu.org/copyleft/gpl.html>.
 
@@ -58,8 +69,8 @@ desc: |
 
 __version__ = u'0.1.0'
 
-from pseudorandom._dataframe import DataFrame
-from pseudorandom._enforce import Enforce
-from pseudorandom._constraint import MaxRep, MinDist
-from pseudorandom._exceptions import EnforceFailed, InvalidConstraint
-from pseudorandom import tools
+from dataframe._dataframe import DataFrame
+from dataframe._enforce import Enforce
+from dataframe._constraint import MaxRep, MinDist
+from dataframe._exceptions import EnforceFailed, InvalidConstraint
+from dataframe import tools

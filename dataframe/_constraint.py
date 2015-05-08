@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pseudorandom._exceptions import InvalidConstraint
+from dataframe._exceptions import InvalidConstraint
 
 class Constraint(object):
 

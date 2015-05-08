@@ -20,8 +20,8 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 import time
 import random
 import itertools
-from pseudorandom.py3compat import *
-from pseudorandom._exceptions import EnforceFailed
+from dataframe.py3compat import *
+from dataframe._exceptions import EnforceFailed
 
 class Enforce(object):
 

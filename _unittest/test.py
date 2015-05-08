@@ -19,8 +19,8 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from pseudorandom import tools, DataFrame, Enforce, MaxRep, MinDist
-from pseudorandom.py3compat import _basestring
+from dataframe import tools, DataFrame, Enforce, MaxRep, MinDist
+from dataframe.py3compat import _basestring
 import pandas as pd
 
 class PseudoRandomTest(unittest.TestCase):
@@ -32,7 +32,7 @@ class PseudoRandomTest(unittest.TestCase):
 
 	def setUp(self):
 
-		pdf = pd.read_csv('example/data.csv')
+		pdf = pd.read_csv('examples/data.csv')
 		self.df = tools.fromPandas(pdf)
 
 	def test_slicing(self):
