@@ -53,8 +53,10 @@ class QToolButtons(QWidget):
 			_(u'How many rows do you want to add?'), value=1, min=1)
 		if not ok:
 			return
+		self.df.startUndoAction()
 		for i in range(n):
 			self.df.insert(-1)
+		self.df.endUndoAction()
 
 	def addColumn(self):
 
@@ -63,8 +65,10 @@ class QToolButtons(QWidget):
 			u'later.)'), value=1, min=1)
 		if not ok:
 			return
+		self.df.startUndoAction()
 		for i in range(n):
 			self.df.insert(self.df.uniqueName())
+		self.df.endUndoAction()
 
 	def importFile(self):
 

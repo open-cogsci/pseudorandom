@@ -17,12 +17,25 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QWidget, QVBoxLayout, QLabel, _, pyqtSignal
+from qdataframe.pyqt import QWidget, QVBoxLayout, _, pyqtSignal, \
+	QShortcut, QKeySequence, Qt
 from qdataframe._qdataframetable import QDataFrameTable
 from qdataframe._qtoolbuttons import QToolButtons
 from qdataframe._qcell import QCell
 from dataframe import DataFrame
 from dataframe.py3compat import _basestring, _unicode
+
+def undoable(fnc):
+
+	def inner(self, *args, **kwdict):
+
+		undo = self.startUndoAction()
+		retval = fnc(self, *args, **kwdict)
+		if undo:
+			self.endUndoAction()
+		return retval
+
+	return inner
 
 class QDataFrame(DataFrame, QWidget):
 
@@ -32,6 +45,8 @@ class QDataFrame(DataFrame, QWidget):
 
 		DataFrame.__init__(self, *arglist, **kwdict)
 		QWidget.__init__(self, parent)
+		self.undoStack = []
+		self.inUndoAction = False
 		self.table = QDataFrameTable(self)
 		self.toolButtons = QToolButtons(self)
 		self.layout = QVBoxLayout(self)
@@ -39,6 +54,38 @@ class QDataFrame(DataFrame, QWidget):
 		self.layout.addWidget(self.toolButtons)
 		self.layout.addWidget(self.table)
 		self.setLayout(self.layout)
+		self.shortcutCopy = QShortcut(QKeySequence(u'Ctrl+Z'), self, self.undo,
+			context=Qt.WidgetWithChildrenShortcut)
+
+	def addUndoHistory(self):
+
+		if not self.inUndoAction:
+			self.undoStack.append(self.copy())
+
+	def undo(self):
+
+		if len(self.undoStack) == 0:
+			return
+		df = self.undoStack.pop()
+		self.data = df.data
+		self._len = df._len
+		self.table.refresh()
+
+	def startUndoAction(self):
+
+		if self.inUndoAction:
+			return False
+		self.addUndoHistory()
+		self.inUndoAction = True
+		return True
+
+	def endUndoAction(self):
+
+		self.inUndoAction = False
+
+	def clearUndo(self):
+
+		self.undoStack = []
 
 	def _print(self):
 
@@ -58,11 +105,6 @@ class QDataFrame(DataFrame, QWidget):
 				self.table.setItem(row+1, col+1, item)
 		DataFrame.setCell(self, key, val)
 
-	def insert(self, key, index=-1):
-
-		DataFrame.insert(self, key, index)
-		self.table.refresh()
-
 	def uniqueName(self):
 
 		name = stem = _(u'untitled')
@@ -72,6 +114,13 @@ class QDataFrame(DataFrame, QWidget):
 			i += 1
 		return name
 
+	@undoable
+	def insert(self, key, index=-1):
+
+		DataFrame.insert(self, key, index)
+		self.table.refresh()
+
+	@undoable
 	def __delitem__(self, key):
 
 		DataFrame.__delitem__(self, key)
@@ -82,3 +131,11 @@ class QDataFrame(DataFrame, QWidget):
 			self.insert(0)
 			self.notify(_(u'Created empty row'))
 		self.table.refresh()
+
+	@undoable
+	def __setitem__(self, key, val):
+		DataFrame.__setitem__(self, key, val)
+
+	@undoable
+	def rename(self, oldKey, newKey):
+		DataFrame.rename(self, oldKey, newKey)

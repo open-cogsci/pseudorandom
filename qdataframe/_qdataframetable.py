@@ -83,11 +83,6 @@ class QDataFrameTable(QTableWidget):
 		self.dropIndicator = QDropIndicator(self)
 		self.moveKeys = [Qt.Key_Left, Qt.Key_Right]
 
-	def move(self, dRow, dCol):
-
-		row = min(self.rowCount()-1, max(1, self.currentRow()+dRow))
-		col = min(self.columnCount()-1, max(1, self.currentColumn()+dCol))
-		self.setCurrentCell(row, col)
 
 	@property
 	def clipboard(self):
@@ -97,7 +92,36 @@ class QDataFrameTable(QTableWidget):
 	def notify(self):
 		return self.df.notify
 
+	def move(self, dRow, dCol):
+
+		"""
+		desc:
+			Move the cursor, i.e. the selected cell.
+
+		arguments:
+			dRow:
+				desc:	The number of rows to move.
+				type:	int
+			dCol:
+				desc:	The number of columns to move.
+				type:	int
+		"""
+
+		row = min(self.rowCount()-1, max(1, self.currentRow()+dRow))
+		col = min(self.columnCount()-1, max(1, self.currentColumn()+dCol))
+		self.setCurrentCell(row, col)
+
 	def mousePressEvent(self, e):
+
+		"""
+		desc:
+			Process mouse presses to initiate drag operations for reordering
+			columns and rows.
+
+		arguments:
+			e:
+				type:	QMouseEvent
+		"""
 
 		QTableWidget.mousePressEvent(self, e)
 		if e.buttons() != Qt.LeftButton:
@@ -137,6 +161,11 @@ class QDataFrameTable(QTableWidget):
 
 	def startDrag(self):
 
+		"""
+		desc:
+			Start a drag operation for reordering rows and columns.
+		"""
+
 		if self.pendingDragData is None:
 			return
 		mimeData = QMimeData()
@@ -148,9 +177,27 @@ class QDataFrameTable(QTableWidget):
 
 	def dragMoveEvent(self, e):
 
+		"""
+		desc:
+			Processes incoming drags
+
+		arguments:
+			e:
+				type:	QDragMoveEvent
+		"""
+
 		self.dragEnterEvent(e)
 
 	def dragEnterEvent(self, e):
+
+		"""
+		desc:
+			Processes incoming drags
+
+		arguments:
+			e:
+				type:	QDragEnterEvent
+		"""
 
 		item = self.itemAt(e.pos())
 		if item is None or (self.column(item) != 0 and self.row(item) != 0) or \
@@ -165,6 +212,10 @@ class QDataFrameTable(QTableWidget):
 		"""
 		desc:
 			Processes drop events to reorder rows and columns.
+
+		arguments:
+			e:
+				type:	QDropEvent
 		"""
 
 		item = self.itemAt(e.pos())
@@ -188,6 +239,7 @@ class QDataFrameTable(QTableWidget):
 			if item.style == u'row':
 				toRow = int(item.text())-1
 				e.accept()
+				self.df.startUndoAction()
 				if fromRow != toRow:
 					if fromRow > toRow:
 						fromRow += 1
@@ -195,6 +247,7 @@ class QDataFrameTable(QTableWidget):
 					self.df[toRow] = self.df[fromRow]
 					del self.df[fromRow]
 				self.refresh()
+				self.df.endUndoAction()
 				return
 		if msg.startswith('__header__:'):
 			try:
@@ -208,12 +261,14 @@ class QDataFrameTable(QTableWidget):
 			if item.style == u'header':
 				toCol = item.text()
 				e.accept()
+				self.df.startUndoAction()
 				if fromCol != toCol:
 					self.df.insert(u'__tmp__', index=self.df.cols.index(toCol))
 					self.df[u'__tmp__'] = self.df[fromCol]
 					del self.df[fromCol]
 					self.df.rename(u'__tmp__', fromCol)
 				self.refresh()
+				self.df.endUndoAction()
 				return
 		e.ignore()
 
@@ -242,6 +297,7 @@ class QDataFrameTable(QTableWidget):
 				self.notify.emit(_unicode(e))
 				item.setText(col)
 		else:
+			self.df.addUndoHistory()
 			DataFrame.setCell(self.df, (col, row-1), item.text())
 			item.updateStyle()
 
@@ -361,6 +417,8 @@ class QDataFrameTable(QTableWidget):
 				type:	bool
 		"""
 
+		if clear:
+			self.df.startUndoAction()
 		# Get the start and end of the selection
 		l = self.selectedRanges()
 		if len(l) == 0:
@@ -390,6 +448,8 @@ class QDataFrameTable(QTableWidget):
 		txt = u'\n'.join([u'\t'.join(_col) for _col in matrix])
 		if copy:
 			self.clipboard.setText(txt)
+		if clear:
+			self.df.endUndoAction()
 
 	@disconnected
 	def paste(self):
@@ -399,6 +459,7 @@ class QDataFrameTable(QTableWidget):
 			Pastes the current clipboard contents onto the DataFrame.
 		"""
 
+		self.df.startUndoAction()
 		txt = self.clipboard.mimeData().text()
 		rows = txt.split(u'\n')
 		cRow = self.currentRow()
@@ -420,3 +481,4 @@ class QDataFrameTable(QTableWidget):
 			cRow += 1
 			if cRow >= self.rowCount():
 				break
+		self.df.endUndoAction()
