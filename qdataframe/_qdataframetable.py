@@ -21,9 +21,10 @@ from qdataframe.pyqt import QTableWidget, QShortcut, QKeySequence, \
 	QApplication, Qt, QDrag, QMimeData, QTimer
 from dataframe import DataFrame
 from qdataframe._qcell import QCell
+from qdataframe._qcelldelegate import QCellDelegate
 from qdataframe._qdropindicator import QDropIndicator
-from qdataframe._menu import QColumnMenu, QRowMenu, QCellMenu, \
-	QRowSelectionMenu, QColumnSelectionMenu, QCellSelectionMenu
+from qdataframe._menu import QColumnMenu, QRowMenu, QCellMenu
+from dataframe.py3compat import _unicode
 
 def disconnected(fnc):
 
@@ -57,6 +58,9 @@ class QDataFrameTable(QTableWidget):
 
 		QTableWidget.__init__(self, df)
 		self.df = df
+		self.cellDelegate = QCellDelegate(self)
+		self.cellDelegate.move.connect(self.move)
+		self.setItemDelegate(self.cellDelegate)
 		self.setItemPrototype(QCell())
 		self.horizontalHeader().setVisible(False)
 		self.verticalHeader().setVisible(False)
@@ -70,11 +74,20 @@ class QDataFrameTable(QTableWidget):
 			self.cut, context=Qt.WidgetWithChildrenShortcut)
 		self.shortcutPrint = QShortcut(QKeySequence(u'Ctrl+P'), self,
 			self.df._print, context=Qt.WidgetWithChildrenShortcut)
+		self.shortcutClear = QShortcut(QKeySequence(u'Del'), self,
+			self.delete, context=Qt.WidgetWithChildrenShortcut)
 		self.cellChanged.connect(self.onCellChanged)
 		self.currentCellChanged.connect(self.onCurrentCellChanged)
 		self.pendingDragData = None
 		self.dragTimer = None
 		self.dropIndicator = QDropIndicator(self)
+		self.moveKeys = [Qt.Key_Left, Qt.Key_Right]
+
+	def move(self, dRow, dCol):
+
+		row = min(self.rowCount()-1, max(1, self.currentRow()+dRow))
+		col = min(self.columnCount()-1, max(1, self.currentColumn()+dCol))
+		self.setCurrentCell(row, col)
 
 	@property
 	def clipboard(self):
@@ -226,12 +239,13 @@ class QDataFrameTable(QTableWidget):
 			try:
 				self.df.rename(col, item.text())
 			except Exception as e:
-				self.notify(e)
+				self.notify.emit(_unicode(e))
 				item.setText(col)
 		else:
 			DataFrame.setCell(self.df, (col, row-1), item.text())
 			item.updateStyle()
 
+	@disconnected
 	def onCurrentCellChanged(self, toRow, toCol, fromRow, fromCol):
 
 		"""
@@ -268,13 +282,10 @@ class QDataFrameTable(QTableWidget):
 			for item in selection:
 				if item.style not in styles:
 					styles.append(item.style)
-			if len(styles) == 1:
-				if styles[0] == u'row':
-					menu = QRowSelectionMenu(selection)
-				elif styles[0] == u'header':
-					menu = QColumnSelectionMenu(selection)
-			else:
-				menu = QCellSelectionMenu(selection)
+			if len(styles) > 1 or styles[0] in (u'row', u'header'):
+				self.notify.emit(_(u'Invalid selection'))
+				return
+			menu = QCellMenu(selection)
 		else:
 			item = self.itemAt(e.pos())
 			if item.style == u'header':
@@ -282,7 +293,7 @@ class QDataFrameTable(QTableWidget):
 			elif item.style == u'row':
 				menu = QRowMenu(item)
 			else:
-				menu = QCellMenu(item)
+				menu = QCellMenu([item])
 		action = menu.exec_(e.globalPos())
 		if action is not None:
 			action.do()
@@ -324,8 +335,17 @@ class QDataFrameTable(QTableWidget):
 
 		self.copy(clear=True)
 
+	def delete(self):
+
+		"""
+		desc:
+			Clears the current selection.
+		"""
+
+		self.copy(clear=True, copy=False)
+
 	@disconnected
-	def copy(self, clear=False):
+	def copy(self, clear=False, copy=True):
 
 		"""
 		desc:
@@ -335,13 +355,20 @@ class QDataFrameTable(QTableWidget):
 			clear:
 				desc:	Indicates whether copied cells should be cleared.
 				type:	bool
+			copy:
+				desc:	Indicates whether cells should be copied to the
+						clipboard.
+				type:	bool
 		"""
 
 		# Get the start and end of the selection
-		firstRow = min([r.topRow() for r in self.selectedRanges()])
-		firstColNr = min([r.leftColumn() for r in self.selectedRanges()])
-		lastRow = max([r.bottomRow() for r in self.selectedRanges()])
-		lastColNr = max([r.rightColumn() for r in self.selectedRanges()])
+		l = self.selectedRanges()
+		if len(l) == 0:
+			return
+		firstRow = min([r.topRow() for r in l])
+		firstColNr = min([r.leftColumn() for r in l])
+		lastRow = max([r.bottomRow() for r in l])
+		lastColNr = max([r.rightColumn() for r in l])
 		colSpan = lastColNr - firstColNr + 1
 		rowSpan = lastRow - firstRow + 1
 		# Create an empty list of lists, where the value __empty__ indicates
@@ -356,14 +383,13 @@ class QDataFrameTable(QTableWidget):
 			colNr = self.column(item)-firstColNr
 			matrix[row][colNr] = item.text()
 			if clear:
-				col = self.cols[self.column(item)-1]
+				col = self.df.cols[self.column(item)-1]
 				row = self.row(item)-1
-				self[col, row] = u''
+				self.df[col, row] = u''
 		# Convert the selection to text and put it on the clipboard
 		txt = u'\n'.join([u'\t'.join(_col) for _col in matrix])
-		self.clipboard.setText(txt)
-		if clear:
-			self.refresh()
+		if copy:
+			self.clipboard.setText(txt)
 
 	@disconnected
 	def paste(self):
@@ -387,11 +413,10 @@ class QDataFrameTable(QTableWidget):
 					try:
 						self.df.rename(self, col, cell)
 					except Exception as e:
-						self.notify(e)
+						self.notify.emit(_unicode(e))
 				else:
-					DataFrame.setCell(self.df, (col, cRow-1), cell)
+					self.df[col, cRow-1] = cell
 				cCol += 1
 			cRow += 1
 			if cRow >= self.rowCount():
 				break
-		self.refresh()

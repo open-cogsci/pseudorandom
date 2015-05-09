@@ -19,17 +19,20 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 if '--qt5' in sys.argv:
-	from PyQt5.QtGui import QKeySequence, QFont, QColor, QIcon, QBrush, QDrag
+	from PyQt5.QtGui import QKeySequence, QFont, QColor, QIcon, QBrush, QDrag, \
+		QStyledItemDelegate
 	from PyQt5.QtWidgets import QTableWidget, QApplication, QPushButton, \
 		QLabel, QInputDialog, QWidget, QShortcut, QTableWidgetItem, \
 		QMenu, QAction, QVBoxLayout, QHBoxLayout, QPixmap
-	from PyQt5.QtCore import Qt, QCoreApplication, QMimeData, QTimer
+	from PyQt5.QtCore import Qt, QCoreApplication, QMimeData, QTimer, QEvent, \
+		pyqtSignal
 	qt5 = True
 else:
 	from PyQt4.QtGui import QTableWidget, QShortcut, QKeySequence, \
 		QApplication, QTableWidgetItem, QFont, QColor, QMenu, QAction, QIcon, \
 		QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QInputDialog, \
-		QBrush, QDrag, QPixmap
-	from PyQt4.QtCore import Qt, QCoreApplication, QMimeData, QTimer
+		QBrush, QDrag, QPixmap, QStyledItemDelegate
+	from PyQt4.QtCore import Qt, QCoreApplication, QMimeData, QTimer, QEvent, \
+		pyqtSignal
 	qt5 = False
 _ = lambda msg: QCoreApplication.translate(u'QDataFrame', msg)

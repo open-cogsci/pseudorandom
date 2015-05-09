@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QAction, QIcon
+from qdataframe.pyqt import QAction, QIcon, _, QKeySequence
 
 class QCellAction(QAction):
 
@@ -25,7 +25,8 @@ class QCellAction(QAction):
 
 		self.item = item
 		self.col = self.item.text()
-		self.dataFrame = self.item.tableWidget().df
+		self.df = self.item.tableWidget().df
+		self.table = self.df.table
 		QAction.__init__(self, QIcon.fromTheme(icon), text, parent)
 
 	def do(self):
@@ -36,94 +37,123 @@ class QRemoveColumnAction(QCellAction):
 
 	def __init__(self, parent, item):
 
-		QCellAction.__init__(self, parent, item, u'Remove %s' % item.text(),
+		QCellAction.__init__(self, parent, item, _(u'Remove %s') % item.text(),
 			u'list-remove')
 
 	def do(self):
 
-		del self.dataFrame[self.col]
+		del self.df[self.col]
 
 class QInsertColumnAction(QCellAction):
 
-	def __init__(self, parent, item):
+	def __init__(self, parent, item, side):
 
-		QCellAction.__init__(self, parent, item, u'Insert column left',
-			u'list-add')
+		QCellAction.__init__(self, parent, item,
+			_(u'Insert new column %s' % side), u'list-add')
+		self.side = side
 
 	def do(self):
 
 		name = u'untitled'
-		while name in self.dataFrame:
+		while name in self.df:
 			name = u'_'+name
-		self.dataFrame.insert(name, index=self.dataFrame.cols.index(self.col))
+		index = self.df.cols.index(self.col)
+		if self.side == u'right':
+			index += 1
+		self.df.insert(name, index=index)
 
 class QRenameColumnAction(QCellAction):
 
 	def __init__(self, parent, item):
-
-		QCellAction.__init__(self, parent, item, u'Rename %s' % item.text(),
+		QCellAction.__init__(self, parent, item, _(u'Rename %s') % item.text(),
 			u'accessories-text-editor')
 
 	def do(self):
 
-		self.dataFrame.table.editItem(self.item)
+		self.table.editItem(self.item)
 
 class QRemoveRowAction(QCellAction):
 
 	def __init__(self, parent, item):
 
-		QCellAction.__init__(self, parent, item, u'Remove row %s' % item.text(),
-			u'list-remove')
+		QCellAction.__init__(self, parent, item,
+			_(u'Remove row %s') % item.text(), u'list-remove')
 
 	def do(self):
 
-		del self.dataFrame[int(self.item.text())-1]
+		del self.df[int(self.item.text())-1]
 
 class QInsertRowAction(QCellAction):
 
-	def __init__(self, parent, item):
+	def __init__(self, parent, item, side):
 
-		QCellAction.__init__(self, parent, item, u'Insert row before',
+		QCellAction.__init__(self, parent, item, _(u'Insert new row %s' % side),
 			u'list-add')
+		self.side = side
 
 	def do(self):
 
-		self.dataFrame.insert(int(self.item.text())-1)
+		index = int(self.item.text())
+		if self.side == u'before':
+			index -= 1
+		self.df.insert(index)
 
 class QSelectionAction(QAction):
 
-	def __init__(self, parent, selection, text, icon):
+	def __init__(self, parent, selection, text, icon, shortcut=None):
 
 		self.selection = selection
-		self.dataFrame = self.selection[0].tableWidget()
+		self.table = self.selection[0].tableWidget()
 		QAction.__init__(self, QIcon.fromTheme(icon), text, parent)
+		if shortcut is not None:
+			self.setShortcut(QKeySequence(shortcut))
 
 	def do(self):
 
 		pass
 
-class QRemoveRowSelectionAction(QSelectionAction):
+class QCutAction(QSelectionAction):
 
 	def __init__(self, parent, selection):
 
-		QSelectionAction.__init__(self, parent, selection,
-			u'Remove %d rows' % len(selection), u'list-remove')
+		QSelectionAction.__init__(self, parent, selection, _(u'Cut'),
+			u'edit-cut', shortcut=u'Ctrl+X')
 
 	def do(self):
 
-		l = [int(item.text())-1 for item in self.selection]
-		for row in sorted(l, reverse=True):
-			del self.dataFrame[row]
+		self.table.cut()
 
-class QRemoveColumnSelectionAction(QSelectionAction):
+class QCopyAction(QSelectionAction):
 
 	def __init__(self, parent, selection):
 
-		QSelectionAction.__init__(self, parent, selection,
-			u'Remove %d columns' % len(selection), u'list-remove')
+		QSelectionAction.__init__(self, parent, selection, _(u'Copy'),
+			u'edit-copy', shortcut=u'Ctrl+C')
 
 	def do(self):
 
-		l = [item.text() for item in self.selection]
-		for col in l:
-			del self.dataFrame[col]
+		self.table.copy()
+
+class QPasteAction(QSelectionAction):
+
+	def __init__(self, parent, selection):
+
+		QSelectionAction.__init__(self, parent, selection, _(u'Paste'),
+			u'edit-paste', shortcut=u'Ctrl+V')
+
+	def do(self):
+
+		self.table.paste()
+
+class QClearAction(QSelectionAction):
+
+	def __init__(self, parent, selection):
+
+		QSelectionAction.__init__(self, parent, selection, _(u'Clear'),
+			u'edit-delete', shortcut=u'Del')
+		if self.table.clipboard.text() == u'':
+			self.setEnabled(False)
+
+	def do(self):
+
+		self.table.delete()

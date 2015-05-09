@@ -20,14 +20,16 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 from qdataframe.pyqt import QMenu
 from qdataframe._action import QRemoveColumnAction, \
 	QInsertColumnAction, QRenameColumnAction, QRemoveRowAction, \
-	QInsertRowAction, QRemoveRowSelectionAction, QRemoveColumnSelectionAction
+	QInsertRowAction, QCutAction, QCopyAction, QPasteAction, QClearAction
 
 class QColumnMenu(QMenu):
 
 	def __init__(self, item):
 
 		QMenu.__init__(self)
-		self.addAction(QInsertColumnAction(self, item))
+		self.addAction(QInsertColumnAction(self, item, u'left'))
+		self.addAction(QInsertColumnAction(self, item, u'right'))
+		self.addSeparator()
 		self.addAction(QRenameColumnAction(self, item))
 		self.addAction(QRemoveColumnAction(self, item))
 
@@ -36,27 +38,18 @@ class QRowMenu(QMenu):
 	def __init__(self, item):
 
 		QMenu.__init__(self)
-		self.addAction(QInsertRowAction(self, item))
+		self.addAction(QInsertRowAction(self, item, u'before'))
+		self.addAction(QInsertRowAction(self, item, u'after'))
+		self.addSeparator()
 		self.addAction(QRemoveRowAction(self, item))
 
 class QCellMenu(QMenu):
 
-	pass
-
-class QRowSelectionMenu(QMenu):
-
 	def __init__(self, selection):
 
 		QMenu.__init__(self)
-		self.addAction(QRemoveRowSelectionAction(self, selection))
-
-class QColumnSelectionMenu(QMenu):
-
-	def __init__(self, selection):
-
-		QMenu.__init__(self)
-		self.addAction(QRemoveColumnSelectionAction(self, selection))
-
-class QCellSelectionMenu(QMenu):
-
-	pass
+		self.addAction(QCutAction(self, selection))
+		self.addAction(QCopyAction(self, selection))
+		self.addAction(QPasteAction(self, selection))
+		self.addSeparator()
+		self.addAction(QClearAction(self, selection))

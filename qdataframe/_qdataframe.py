@@ -17,38 +17,32 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QWidget, QVBoxLayout, QLabel, _
+from qdataframe.pyqt import QWidget, QVBoxLayout, QLabel, _, pyqtSignal
 from qdataframe._qdataframetable import QDataFrameTable
 from qdataframe._qtoolbuttons import QToolButtons
 from qdataframe._qcell import QCell
 from dataframe import DataFrame
-from dataframe.py3compat import _basestring
+from dataframe.py3compat import _basestring, _unicode
 
 class QDataFrame(DataFrame, QWidget):
+
+	notify = pyqtSignal(_unicode)
 
 	def __init__(self, parent, *arglist, **kwdict):
 
 		DataFrame.__init__(self, *arglist, **kwdict)
 		QWidget.__init__(self, parent)
 		self.table = QDataFrameTable(self)
-		self.notifyLabel = QLabel(self)
-		self.notifyLabel.hide()
 		self.toolButtons = QToolButtons(self)
 		self.layout = QVBoxLayout(self)
 		self.layout.setContentsMargins(0, 0, 0, 0)
 		self.layout.addWidget(self.toolButtons)
 		self.layout.addWidget(self.table)
-		self.layout.addWidget(self.notifyLabel)
 		self.setLayout(self.layout)
 
 	def _print(self):
 
 		print(self)
-
-	def notify(self, msg):
-
-		self.notifyLabel.setText(str(msg))
-		self.notifyLabel.show()
 
 	def setCell(self, key, val):
 
@@ -83,7 +77,7 @@ class QDataFrame(DataFrame, QWidget):
 		DataFrame.__delitem__(self, key)
 		if len(self.cols) == 0:
 			self.insert(self.uniqueName())
-			self.notify(_(u'Created empty column'))
+			self.notify.emit(_(u'Created empty column'))
 		if len(self) == 0:
 			self.insert(0)
 			self.notify(_(u'Created empty row'))

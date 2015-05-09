@@ -40,6 +40,10 @@ class QCell(QTableWidgetItem):
 
 		return self.style in (u'header', u'row')
 
+	def event(self, e):
+
+		print(e)
+
 	@property
 	def style(self):
 
