@@ -91,7 +91,6 @@ class QDataFrame(DataFrame, QWidget):
 		self.layout.setContentsMargins(0, 0, 0, 0)
 		if self.addToolButtons:
 			self.toolButtons = QToolButtons(self)
-			self.layout.addWidget(self.toolButtons)
 		self.layout.addWidget(self.table)
 		self.setLayout(self.layout)
 		self.shortcutUndo = QShortcut(QKeySequence(u'Ctrl+Z'), self, self.undo,
@@ -106,6 +105,12 @@ class QDataFrame(DataFrame, QWidget):
 
 		if not self.inUndoAction:
 			self.undoStack.append(self.copy())
+
+	def resizeEvent(self, event):
+
+		if self.addToolButtons:
+			self.toolButtons.setPosition()
+		QWidget.resizeEvent(self, event)
 
 	def undo(self):
 
@@ -184,7 +189,7 @@ class QDataFrame(DataFrame, QWidget):
 		name = stem = _(u'untitled')
 		i = 1
 		while name in self.cols:
-			name = stem + u'-%d' % i
+			name = stem + u'_%d' % i
 			i += 1
 		return name
 
@@ -208,7 +213,7 @@ class QDataFrame(DataFrame, QWidget):
 
 	@undoable
 	def insert(self, key, index=-1):
-		
+
 		DataFrame.insert(self, key, index)
 		if not self.autoUpdate:
 			return
@@ -225,7 +230,7 @@ class QDataFrame(DataFrame, QWidget):
 			self.notify.emit(_(u'Created empty column'))
 		if len(self) == 0:
 			self.insert(0)
-			self.notify(_(u'Created empty row'))
+			self.notify.emit(_(u'Created empty row'))
 		self.table.refresh()
 
 	@undoable

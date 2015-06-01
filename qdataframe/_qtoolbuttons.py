@@ -17,14 +17,14 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QWidget, QHBoxLayout, QPushButton, QIcon, QMenu, \
-	QInputDialog, _, QAction, QFileDialog
+from qdataframe.pyqt import QFrame, QHBoxLayout, QPushButton, QIcon, QMenu, \
+	QInputDialog, _, QAction, QFileDialog, QPoint, qt5
 
-class QToolButtons(QWidget):
+class QToolButtons(QFrame):
 
 	def __init__(self, df):
 
-		QWidget.__init__(self, df)
+		QFrame.__init__(self, df)
 		self.df = df
 		self.table = self.df.table
 		self.layout = QHBoxLayout(self)
@@ -62,6 +62,14 @@ class QToolButtons(QWidget):
 		self.layout.addWidget(self.importButton)
 		self.layout.addStretch()
 		self.setLayout(self.layout)
+		self.adjustSize()
+		self.setPosition()
+
+	def setPosition(self):
+
+		geom = self.frameGeometry()
+		geom.moveTopRight(QPoint(self.df.width()-8, 8))
+		self.setGeometry(geom)
 
 	def addRow(self):
 
@@ -90,6 +98,9 @@ class QToolButtons(QWidget):
 
 		path = QFileDialog.getOpenFileName(self, _(u'Import Excel file'),
 			filter=_(u'Excel files (*.xlsx *.xls)'))
+		if qt5:
+			# PyQt5 returns a path, filter tuple
+			path = path[0]
 		if path == u'':
 			return
 		try:
@@ -105,6 +116,9 @@ class QToolButtons(QWidget):
 
 		path = QFileDialog.getOpenFileName(self, _(u'Import text file'),
 			filter=_(u'Text files (*.csv *.txt *.*)'))
+		if qt5:
+			# PyQt5 returns a path, filter tuple
+			path = path[0]
 		if path == u'':
 			return
 		delimiter, quote = QTextImportDialog(self.table,

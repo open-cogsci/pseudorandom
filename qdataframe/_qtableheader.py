@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QHeaderView, QLineEdit, Qt
+from qdataframe.pyqt import QHeaderView, QLineEdit, Qt, qt5
 from qdataframe._menu import QColumnMenu, QRowMenu
 from dataframe.py3compat import _unicode
 
@@ -28,9 +28,12 @@ class QRowHeader(QHeaderView):
 		QHeaderView.__init__(self, Qt.Vertical, table)
 		self.table = table
 		self.df = table.df
-		self.setMovable(True)
+		if qt5:
+			self.setSectionsMovable(True)
+		else:
+			self.setMovable(True)
 		self.sectionMoved.connect(self.moveRows)
-		self.setClickable(True)
+		# self.setClickable(True)
 
 	def moveRows(self, logicalIndex, fromRow, toRow):
 
@@ -73,8 +76,12 @@ class QColumnHeader(QHeaderView):
 		QHeaderView.__init__(self, Qt.Horizontal, table)
 		self.table = table
 		self.df = table.df
-		self.setMovable(True)
-		self.setClickable(True)
+		if qt5:
+			self.setSectionsMovable(True)
+			self.setSectionsClickable(True)
+		else:
+			self.setMovable(True)
+			self.setClickable(True)
 		self.line = QLineEdit(parent=self.viewport())
 		self.line.setAlignment(Qt.AlignCenter)
 		self.line.setHidden(True)
