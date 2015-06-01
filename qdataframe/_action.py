@@ -19,38 +19,28 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 from qdataframe.pyqt import QAction, QIcon, _, QKeySequence
 
-class QCellAction(QAction):
+class QRemoveColumnAction(QAction):
 
-	def __init__(self, parent, item, text, icon):
+	def __init__(self, parent, df, col):
 
-		self.item = item
-		self.col = self.item.text()
-		self.df = self.item.tableWidget().df
-		self.table = self.df.table
-		QAction.__init__(self, QIcon.fromTheme(icon), text, parent)
-
-	def do(self):
-
-		pass
-
-class QRemoveColumnAction(QCellAction):
-
-	def __init__(self, parent, item):
-
-		QCellAction.__init__(self, parent, item, _(u'Remove %s') % item.text(),
-			u'list-remove')
+		QAction.__init__(self, QIcon.fromTheme(u'list-remove'),
+			_(u'Remove %s' % col), parent)
+		self.df = df
+		self.col = col
 
 	def do(self):
 
 		del self.df[self.col]
 
-class QInsertColumnAction(QCellAction):
+class QInsertColumnAction(QAction):
 
-	def __init__(self, parent, item, side):
+	def __init__(self, parent, df, col, side):
 
-		QCellAction.__init__(self, parent, item,
-			_(u'Insert new column %s' % side), u'list-add')
+		QAction.__init__(self, QIcon.fromTheme(u'list-add'),
+			_(u'Insert new column %s' % side), parent)
 		self.side = side
+		self.df = df
+		self.col = col
 
 	def do(self):
 
@@ -62,40 +52,47 @@ class QInsertColumnAction(QCellAction):
 			index += 1
 		self.df.insert(name, index=index)
 
-class QRenameColumnAction(QCellAction):
+class QRenameColumnAction(QAction):
 
-	def __init__(self, parent, item):
-		QCellAction.__init__(self, parent, item, _(u'Rename %s') % item.text(),
-			u'accessories-text-editor')
+	def __init__(self, parent, df, col):
 
-	def do(self):
-
-		self.table.editItem(self.item)
-
-class QRemoveRowAction(QCellAction):
-
-	def __init__(self, parent, item):
-
-		QCellAction.__init__(self, parent, item,
-			_(u'Remove row %s') % item.text(), u'list-remove')
+		QAction.__init__(self, QIcon.fromTheme(u'accessories-text-editor'),
+			_(u'Rename %s' % col), parent)
+		self.df = df
+		self.col = col
 
 	def do(self):
 
-		del self.df[int(self.item.text())-1]
+		self.df.table.columnHeader.editHeader(self.df.cols.index(self.col))
 
-class QInsertRowAction(QCellAction):
+class QRemoveRowAction(QAction):
 
-	def __init__(self, parent, item, side):
+	def __init__(self, parent, df, row):
 
-		QCellAction.__init__(self, parent, item, _(u'Insert new row %s' % side),
-			u'list-add')
+		QAction.__init__(self, QIcon.fromTheme(u'list-remove'),
+			_(u'Remove row %d') % (row+1), parent)
+		self.df = df
+		self.row = row
+
+	def do(self):
+
+		del self.df[self.row]
+
+class QInsertRowAction(QAction):
+
+	def __init__(self, parent, df, row, side):
+
+		QAction.__init__(self, QIcon.fromTheme(u'list-add'),
+			_(u'Insert new row %s' % side), parent)
+		self.df = df
+		self.row = row
 		self.side = side
 
 	def do(self):
 
-		index = int(self.item.text())
-		if self.side == u'before':
-			index -= 1
+		index = self.row
+		if self.side == u'after':
+			index += 1
 		self.df.insert(index)
 
 class QSelectionAction(QAction):

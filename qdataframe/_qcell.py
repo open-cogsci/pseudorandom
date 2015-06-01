@@ -17,8 +17,7 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QTableWidgetItem, QFont, QColor, Qt, qt5, \
-	QBrush
+from qdataframe.pyqt import QTableWidgetItem, QFont, QColor, Qt, QBrush
 from dataframe.py3compat import _unicode
 
 class QCell(QTableWidgetItem):
@@ -35,14 +34,6 @@ class QCell(QTableWidgetItem):
 		fnt.setWeight(QFont.Black)
 		self.setFont(fnt)
 		self.unhighlight()
-
-	def draggable(self):
-
-		return self.style in (u'header', u'row')
-
-	def event(self, e):
-
-		print(e)
 
 	@property
 	def style(self):
@@ -64,17 +55,10 @@ class QCell(QTableWidgetItem):
 		elif self.style == u'header':
 			self.setTextAlignment(Qt.AlignCenter)
 			self.setHeaderStyle()
-			self.setFlags(self.flags() & ~Qt.ItemIsSelectable)
 		elif self.style == u'row':
 			self.setTextAlignment(Qt.AlignRight)
-			self.setFlags(self.flags() & ~Qt.ItemIsEditable \
-				& ~Qt.ItemIsSelectable)
-			self.setHeaderStyle()
-		elif self.style == u'disabled':
-			self.setFlags(self.flags() & ~Qt.ItemIsEnabled \
-				& ~Qt.ItemIsSelectable)
 		else:
-			raise Exception(u'Unknown style: %s' % style)
+			raise Exception(u'Unknown style: %s' % self.style)
 
 	def highlight(self):
 

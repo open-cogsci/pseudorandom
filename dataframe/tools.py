@@ -22,6 +22,8 @@ desc:
 ---
 """
 
+from dataframe._dataframe import DataFrame
+
 def fromPandas(pdf):
 
 	"""
@@ -38,12 +40,28 @@ def fromPandas(pdf):
 		type:	DataFrame
 	"""
 
-	from dataframe._dataframe import DataFrame
-
 	cols = list(pdf.columns.values)
 	rows = len(pdf)
 	df = DataFrame(cols=cols, rows=rows)
 	for col in cols:
 		for i in range(rows):
 			df[col, i] = pdf[col][i]
+	return df
+
+def fromText(path, delimiter=u',', quote=u'"'):
+
+	import csv
+	fd = open('path')
+	cols = None
+	rows = []
+	for row in csv.reader(fd, delimiter=delimiter, quotechar=quote):
+		if cols is None:
+			cols = row
+			continue
+		rows.append(row)
+	fd.close()
+	df = DataFrame(cols, rows=len(rows))
+	for colNr, col in enumerate(cols):
+		for rwo in range(len(rows)):
+			df[col, row] = rows[row, colNr]
 	return df

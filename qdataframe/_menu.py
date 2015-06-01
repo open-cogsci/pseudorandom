@@ -22,28 +22,36 @@ from qdataframe._action import QRemoveColumnAction, \
 	QInsertColumnAction, QRenameColumnAction, QRemoveRowAction, \
 	QInsertRowAction, QCutAction, QCopyAction, QPasteAction, QClearAction
 
-class QColumnMenu(QMenu):
+class QContextMenu(QMenu):
 
-	def __init__(self, item):
+	def go(self, pos):
 
-		QMenu.__init__(self)
-		self.addAction(QInsertColumnAction(self, item, u'left'))
-		self.addAction(QInsertColumnAction(self, item, u'right'))
-		self.addSeparator()
-		self.addAction(QRenameColumnAction(self, item))
-		self.addAction(QRemoveColumnAction(self, item))
+		action = self.exec_(pos)
+		if action is not None:
+			action.do()
 
-class QRowMenu(QMenu):
+class QColumnMenu(QContextMenu):
 
-	def __init__(self, item):
+	def __init__(self, df, col):
 
 		QMenu.__init__(self)
-		self.addAction(QInsertRowAction(self, item, u'before'))
-		self.addAction(QInsertRowAction(self, item, u'after'))
+		self.addAction(QInsertColumnAction(self, df, col, u'left'))
+		self.addAction(QInsertColumnAction(self, df, col, u'right'))
 		self.addSeparator()
-		self.addAction(QRemoveRowAction(self, item))
+		self.addAction(QRenameColumnAction(self, df, col))
+		self.addAction(QRemoveColumnAction(self, df, col))
 
-class QCellMenu(QMenu):
+class QRowMenu(QContextMenu):
+
+	def __init__(self, df, row):
+
+		QMenu.__init__(self)
+		self.addAction(QInsertRowAction(self, df, row, u'before'))
+		self.addAction(QInsertRowAction(self, df, row, u'after'))
+		self.addSeparator()
+		self.addAction(QRemoveRowAction(self, df, row))
+
+class QCellMenu(QContextMenu):
 
 	def __init__(self, selection):
 

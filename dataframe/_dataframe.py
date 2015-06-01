@@ -67,6 +67,105 @@ class DataFrame(object):
 		for col in self.data:
 			self.data[col] = self.emptyCol()
 
+	@classmethod
+	def fromLists(cls, cols, rows, *arglist, **kwdict):
+
+		df = cls(cols, len(rows), *arglist, **kwdict)
+		for colNr, col in enumerate(cols):
+			for row in range(len(rows)):
+				df[col, row] = rows[row][colNr]
+		return df
+
+	@classmethod
+	def fromExcel(cls, path, *arglist, **kwdict):
+
+		"""
+		desc:
+			Reads an Excel file in any of the formats supported by openpyxl, and
+			returns it as a DataFrame. If there are multiple sheets, the first
+			sheet is used.
+
+		arguments:
+			path:
+				desc:	The full path to an Excel file.
+				type:	str
+
+		argument-list:
+			arglist:	A list of arguments to be passed to the DataFrame
+						constructor.
+
+		keyword-dict:
+			kwdict:		A dict of keywords to be passed to the DataFrame
+						constructor.
+
+		returns:
+			type:	DataFrame
+		"""
+
+		from openpyxl import load_workbook
+		wb = load_workbook(path)
+		ws = wb.get_active_sheet()
+		cols = None
+		rows = []
+		_len = 0
+		for row in ws.rows:
+			if cols is None:
+				cols = []
+				for cell in row:
+					if cell.value is None:
+						break
+					cols.append(cell.value)
+					_len += 1
+			else:
+				rows.append([cell.value for cell in row[:_len]])
+		return cls.fromLists(cols, rows, *arglist, **kwdict)
+
+	@classmethod
+	def fromText(cls, path, delimiter=u',', quote=u'"', *arglist, **kwdict):
+
+		"""
+		desc:
+			Reads a text file, such as a CSV file, and returns it as a
+			DataFrame.
+
+		arguments:
+			path:
+				desc:	The full path to a text file.
+				type:	str
+
+		keywords:
+			delimiter:
+				desc:	A character that delimits columns.
+				type:	str
+			quote:
+				desc:	A character that quotes columns.
+				type:	str
+
+		argument-list:
+			arglist:	A list of arguments to be passed to the DataFrame
+						constructor.
+
+		keyword-dict:
+			kwdict:		A dict of keywords to be passed to the DataFrame
+						constructor.
+
+		returns:
+			type:	DataFrame
+		"""
+
+		import csv
+		fd = open(path)
+		cols = None
+		rows = []
+		for row in csv.reader(fd, delimiter=delimiter.encode(),
+			quotechar=quote.encode()):
+			if cols is None:
+				cols = row
+				continue
+			rows.append(row)
+		fd.close()
+		return cls.fromLists(cols, rows, *arglist, **kwdict)
+
 	def __eq__(self, other):
 
 		if not isinstance(other, DataFrame) or self.cells != other.cells:
@@ -353,6 +452,21 @@ class DataFrame(object):
 		"""
 
 		return list(range(len(self)))
+
+	def copyFrom(self, df):
+
+		"""
+		desc:
+			Turns the current DataFrame into a copy of anothe DataFrame.
+
+		arguments:
+				df:		The dataframe to copy.
+				type:	DataFrame
+		"""
+
+		df = df.copy()
+		self.data = df.data
+		self._len = df._len
 
 	def copy(self):
 

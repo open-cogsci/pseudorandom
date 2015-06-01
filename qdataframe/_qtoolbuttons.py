@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from qdataframe.pyqt import QWidget, QHBoxLayout, QPushButton, QIcon, \
-	QInputDialog, _
+from qdataframe.pyqt import QWidget, QHBoxLayout, QPushButton, QIcon, QMenu, \
+	QInputDialog, _, QAction, QFileDialog
 
 class QToolButtons(QWidget):
 
@@ -26,24 +26,40 @@ class QToolButtons(QWidget):
 
 		QWidget.__init__(self, df)
 		self.df = df
+		self.table = self.df.table
 		self.layout = QHBoxLayout(self)
 		self.layout.setContentsMargins(0, 0, 0, 0)
-		self.addRowButton = QPushButton(QIcon.fromTheme(u'list-add'),
-			_(u'Add rows'))
-		self.addRowButton.clicked.connect(self.addRow)
-		self.addColButton = QPushButton(QIcon.fromTheme(u'list-add'),
-			_(u'Add columns'))
-		self.addColButton.clicked.connect(self.addColumn)
-		self.importFileButton = QPushButton(QIcon.fromTheme(u'document-open'),
-			_(u'Import from file'))
-		self.importFileButton.clicked.connect(self.importFile)
-		self.importClipboardButton = QPushButton(QIcon.fromTheme(u'edit-paste'),
-			_(u'Import from clipboard'))
-		self.importClipboardButton.clicked.connect(self.importClipboard)
-		self.layout.addWidget(self.addRowButton)
-		self.layout.addWidget(self.addColButton)
-		self.layout.addWidget(self.importFileButton)
-		self.layout.addWidget(self.importClipboardButton)
+		# Add menu
+		self.addButton = QPushButton(QIcon.fromTheme(u'list-add'),
+			_(u'Add'))
+		self.addMenu = QMenu(self)
+		self.addRowAction = QAction(QIcon.fromTheme(
+			u'list-add'), _(u'Rows'), self.addMenu)
+		self.addRowAction.triggered.connect(self.addRow)
+		self.addMenu.addAction(self.addRowAction)
+		self.addColumnAction = QAction(QIcon.fromTheme(
+			u'list-add'), _(u'Columns'), self.addMenu)
+		self.addColumnAction.triggered.connect(self.addColumn)
+		self.addMenu.addAction(self.addColumnAction)
+		self.addButton.setMenu(self.addMenu)
+		# Import menu
+		self.importButton = QPushButton(QIcon.fromTheme(u'document-open'),
+			_(u'Import data'))
+		self.importMenu = QMenu(self)
+		# Import Excel
+		self.importExcelAction = QAction(QIcon.fromTheme(
+			u'x-office-spreadsheet'), _(u'Excel'), self.importMenu)
+		self.importExcelAction.triggered.connect(self.importExcel)
+		self.importMenu.addAction(self.importExcelAction)
+		self.importMenu.addAction(self.importExcelAction)
+		# Import text
+		self.importTextAction = QAction(QIcon.fromTheme(
+			u'text-x-generic'), _(u'Text data'), self.importMenu)
+		self.importTextAction.triggered.connect(self.importText)
+		self.importMenu.addAction(self.importTextAction)
+		self.importButton.setMenu(self.importMenu)
+		self.layout.addWidget(self.addButton)
+		self.layout.addWidget(self.importButton)
 		self.layout.addStretch()
 		self.setLayout(self.layout)
 
@@ -70,9 +86,37 @@ class QToolButtons(QWidget):
 			self.df.insert(self.df.uniqueName())
 		self.df.endUndoAction()
 
-	def importFile(self):
+	def importExcel(self):
 
-		pass
+		path = QFileDialog.getOpenFileName(self, _(u'Import Excel file'),
+			filter=_(u'Excel files (*.xlsx *.xls)'))
+		if path == u'':
+			return
+		try:
+			df = self.df.fromExcel(path)
+		except:
+			self.df.notify.emit(_(u'Failed to open "%s"') % path)
+			return
+		self.df.copyFrom(df)
+
+	def importText(self):
+
+		from qdataframe._qtextimportdialog import QTextImportDialog
+
+		path = QFileDialog.getOpenFileName(self, _(u'Import text file'),
+			filter=_(u'Text files (*.csv *.txt *.*)'))
+		if path == u'':
+			return
+		delimiter, quote = QTextImportDialog(self.table,
+			path).getTextImportSettings()
+		if delimiter is None:
+			return
+		try:
+			df = self.df.fromText(path, delimiter=delimiter, quote=quote)
+		except:
+			self.df.notify.emit(_(u'Failed to open "%s"') % path)
+			return
+		self.df.copyFrom(df)
 
 	def importClipboard(self):
 

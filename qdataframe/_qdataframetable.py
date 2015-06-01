@@ -18,13 +18,12 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from qdataframe.pyqt import QTableWidget, QShortcut, QKeySequence, \
-	QApplication, Qt, QDrag, QMimeData, QTimer
+	QApplication, Qt
 from dataframe import DataFrame
 from qdataframe._qcell import QCell
 from qdataframe._qcelldelegate import QCellDelegate
-from qdataframe._qdropindicator import QDropIndicator
-from qdataframe._menu import QColumnMenu, QRowMenu, QCellMenu
-from dataframe.py3compat import _unicode
+from qdataframe._qtableheader import QColumnHeader, QRowHeader
+from qdataframe._menu import QCellMenu
 
 def disconnected(fnc):
 
@@ -62,9 +61,10 @@ class QDataFrameTable(QTableWidget):
 		self.cellDelegate.move.connect(self.move)
 		self.setItemDelegate(self.cellDelegate)
 		self.setItemPrototype(QCell())
-		self.horizontalHeader().setVisible(False)
-		self.verticalHeader().setVisible(False)
-		self.setAcceptDrops(True)
+		self.columnHeader = QColumnHeader(self)
+		self.setHorizontalHeader(self.columnHeader)
+		self.rowHeader = QRowHeader(self)
+		self.setVerticalHeader(self.rowHeader)
 		self.refresh()
 		self.shortcutCopy = QShortcut(QKeySequence(u'Ctrl+C'), self, self.copy,
 			context=Qt.WidgetWithChildrenShortcut)
@@ -78,11 +78,6 @@ class QDataFrameTable(QTableWidget):
 			self.delete, context=Qt.WidgetWithChildrenShortcut)
 		self.cellChanged.connect(self.onCellChanged)
 		self.currentCellChanged.connect(self.onCurrentCellChanged)
-		self.pendingDragData = None
-		self.dragTimer = None
-		self.dropIndicator = QDropIndicator(self)
-		self.moveKeys = [Qt.Key_Left, Qt.Key_Right]
-
 
 	@property
 	def clipboard(self):
@@ -111,167 +106,6 @@ class QDataFrameTable(QTableWidget):
 		col = min(self.columnCount()-1, max(1, self.currentColumn()+dCol))
 		self.setCurrentCell(row, col)
 
-	def mousePressEvent(self, e):
-
-		"""
-		desc:
-			Process mouse presses to initiate drag operations for reordering
-			columns and rows.
-
-		arguments:
-			e:
-				type:	QMouseEvent
-		"""
-
-		QTableWidget.mousePressEvent(self, e)
-		if e.buttons() != Qt.LeftButton:
-			return
-		item = self.itemAt(e.pos())
-		if item is None:
-			return
-		if item.style in (u'row', u'header'):
-			# Drags are not started right away, but only after the mouse has been
-			# pressed for a minimum interval. To accomplish this, we set a timer,
-			# and cancel the timer when the mouse cursor is released.
-			if self.dragTimer is not None:
-				self.dragTimer.stop()
-			self.pendingDragData = u'__%s__:%s' % (item.style, item.text())
-			self.dragTimer = QTimer()
-			self.dragTimer.setSingleShot(True)
-			self.dragTimer.setInterval(150)
-			self.dragTimer.timeout.connect(self.startDrag)
-			self.dragTimer.start()
-			e.accept()
-
-	def mouseReleaseEvent(self, e):
-
-		"""
-		desc:
-			Cancels pending drag operations when the mouse is released to
-			quickly. This avoids accidental dragging.
-
-		arguments:
-			e:
-				desc:	A mouse event.
-				type:	QMouseEvent
-		"""
-
-		QTableWidget.mouseReleaseEvent(self, e)
-		self.pendingDragData = None
-
-	def startDrag(self):
-
-		"""
-		desc:
-			Start a drag operation for reordering rows and columns.
-		"""
-
-		if self.pendingDragData is None:
-			return
-		mimeData = QMimeData()
-		mimeData.setText(self.pendingDragData)
-		drag = QDrag(self)
-		drag.setMimeData(mimeData)
-		drag.exec_()
-		self.dropIndicator.hide()
-
-	def dragMoveEvent(self, e):
-
-		"""
-		desc:
-			Processes incoming drags
-
-		arguments:
-			e:
-				type:	QDragMoveEvent
-		"""
-
-		self.dragEnterEvent(e)
-
-	def dragEnterEvent(self, e):
-
-		"""
-		desc:
-			Processes incoming drags
-
-		arguments:
-			e:
-				type:	QDragEnterEvent
-		"""
-
-		item = self.itemAt(e.pos())
-		if item is None or (self.column(item) != 0 and self.row(item) != 0) or \
-			(self.column(item) == 0 and self.row(item) == 0):
-			e.ignore()
-			return
-		self.dropIndicator.indicate(item)
-		e.accept()
-
-	def dropEvent(self, e):
-
-		"""
-		desc:
-			Processes drop events to reorder rows and columns.
-
-		arguments:
-			e:
-				type:	QDropEvent
-		"""
-
-		item = self.itemAt(e.pos())
-		if item is None:
-			e.ignore()
-			return
-		mimeData = e.mimeData()
-		if not mimeData.hasText():
-			e.ignore()
-			return
-		msg = mimeData.text()
-		if msg.startswith('__row__:'):
-			try:
-				fromRow = int(msg[8:])-1
-			except:
-				e.ignore()
-				return
-			if fromRow not in self.df.range:
-				e.ignore()
-				return
-			if item.style == u'row':
-				toRow = int(item.text())-1
-				e.accept()
-				self.df.startUndoAction()
-				if fromRow != toRow:
-					if fromRow > toRow:
-						fromRow += 1
-					self.df.insert(toRow)
-					self.df[toRow] = self.df[fromRow]
-					del self.df[fromRow]
-				self.refresh()
-				self.df.endUndoAction()
-				return
-		if msg.startswith('__header__:'):
-			try:
-				fromCol = msg[11:]
-			except:
-				e.ignore()
-				return
-			if fromCol not in self.df.cols:
-				e.ignore()
-				return
-			if item.style == u'header':
-				toCol = item.text()
-				e.accept()
-				self.df.startUndoAction()
-				if fromCol != toCol:
-					self.df.insert(u'__tmp__', index=self.df.cols.index(toCol))
-					self.df[u'__tmp__'] = self.df[fromCol]
-					del self.df[fromCol]
-					self.df.rename(u'__tmp__', fromCol)
-				self.refresh()
-				self.df.endUndoAction()
-				return
-		e.ignore()
-
 	@disconnected
 	def onCellChanged(self, row, colNr):
 
@@ -288,36 +122,29 @@ class QDataFrameTable(QTableWidget):
 				type:	int
 		"""
 
-		col = self.df.cols[colNr-1]
+		col = self.df.cols[colNr]
 		item = self.item(row, colNr)
-		if row == 0:
-			try:
-				self.df.rename(col, item.text())
-			except Exception as e:
-				self.notify.emit(_unicode(e))
-				item.setText(col)
-		else:
-			self.df.addUndoHistory()
-			DataFrame.setCell(self.df, (col, row-1), item.text())
-			item.updateStyle()
+		self.df.addUndoHistory()
+		DataFrame.setCell(self.df, (col, row), item.text())
+		item.updateStyle()
 
 	@disconnected
 	def onCurrentCellChanged(self, toRow, toCol, fromRow, fromCol):
 
 		"""
 		desc:
-			Prevents the cursor from going into headers, and highlights headers.
+			Highlights the currently active row and column headers.
 		"""
 
-		if fromRow != 0 and fromCol != 0:
-			item = self.item(fromRow, 0)
+		if fromCol != toCol:
+			item = self.horizontalHeaderItem(fromCol)
 			if item is not None: item.unhighlight()
-			item = self.item(0, fromCol)
-			if item is not None: item.unhighlight()
-		if toRow != 0 and toCol != 0:
-			item = self.item(toRow, 0)
+			item = self.horizontalHeaderItem(toCol)
 			if item is not None: item.highlight()
-			item = self.item(0, toCol)
+		if fromRow != toRow:
+			item = self.verticalHeaderItem(fromRow)
+			if item is not None: item.unhighlight()
+			item = self.verticalHeaderItem(toRow)
 			if item is not None: item.highlight()
 
 	@disconnected
@@ -334,22 +161,10 @@ class QDataFrameTable(QTableWidget):
 
 		selection = self.selectedItems()
 		if len(selection) > 1:
-			styles = []
-			for item in selection:
-				if item.style not in styles:
-					styles.append(item.style)
-			if len(styles) > 1 or styles[0] in (u'row', u'header'):
-				self.notify.emit(_(u'Invalid selection'))
-				return
 			menu = QCellMenu(selection)
 		else:
 			item = self.itemAt(e.pos())
-			if item.style == u'header':
-				menu = QColumnMenu(item)
-			elif item.style == u'row':
-				menu = QRowMenu(item)
-			else:
-				menu = QCellMenu([item])
+			menu = QCellMenu([item])
 		action = menu.exec_(e.globalPos())
 		if action is not None:
 			action.do()
@@ -363,23 +178,21 @@ class QDataFrameTable(QTableWidget):
 		"""
 
 		# Give the table the right dimensions
-		self.setRowCount(len(self.df)+1)
-		self.setColumnCount(len(self.df.cols)+1)
-		# Create header row
-		for colNr, col in enumerate(self.df.cols):
-			item = QCell(col, style=u'header')
-			self.setItem(0, colNr+1, item)
-		# Create number column
-		for row in self.df.range:
-			item = QCell(row+1, style=u'row')
-			self.setItem(row+1, 0, item)
-		# Create disabled corner
-		self.setItem(0, 0, QCell(style=u'disabled'))
+		self.setRowCount(len(self.df))
+		self.setColumnCount(len(self.df.cols))
 		# Fill the table with QCells
 		for colNr, col in enumerate(self.df.cols):
+			# Set the column headers
+			item = QCell(col, style=u'header')
+			self.setHorizontalHeaderItem(colNr, item)
+			# Set the cells
 			for row in self.df.range:
 				item = QCell(self.df[col, row])
-				self.setItem(row+1, colNr+1, item)
+				self.setItem(row, colNr, item)
+		# Set the row heades
+		for row in self.df.range:
+			item = QCell(row+1, style=u'row')
+			self.setVerticalHeaderItem(row, item)
 
 	def cut(self):
 
@@ -441,8 +254,8 @@ class QDataFrameTable(QTableWidget):
 			colNr = self.column(item)-firstColNr
 			matrix[row][colNr] = item.text()
 			if clear:
-				col = self.df.cols[self.column(item)-1]
-				row = self.row(item)-1
+				col = self.df.cols[self.column(item)]
+				row = self.row(item)
 				self.df[col, row] = u''
 		# Convert the selection to text and put it on the clipboard
 		txt = u'\n'.join([u'\t'.join(_col) for _col in matrix])
@@ -469,14 +282,8 @@ class QDataFrameTable(QTableWidget):
 			for cell in cells:
 				if cCol >= self.columnCount():
 					break
-				col = self.df.cols[cCol-1]
-				if cRow == 0:
-					try:
-						self.df.rename(self, col, cell)
-					except Exception as e:
-						self.notify.emit(_unicode(e))
-				else:
-					self.df[col, cRow-1] = cell
+				col = self.df.cols[cCol]
+				self.df[col, cRow] = cell
 				cCol += 1
 			cRow += 1
 			if cRow >= self.rowCount():

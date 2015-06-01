@@ -23,7 +23,8 @@ if '--qt5' in sys.argv:
 		QStyledItemDelegate
 	from PyQt5.QtWidgets import QTableWidget, QApplication, QPushButton, \
 		QLabel, QInputDialog, QWidget, QShortcut, QTableWidgetItem, \
-		QMenu, QAction, QVBoxLayout, QHBoxLayout, QPixmap
+		QMenu, QAction, QVBoxLayout, QHBoxLayout, QPixmap, QFileDialog, \
+		QHeaderView, QLineEdit, QDialog, QFormLayout, QDialogButtonBox
 	from PyQt5.QtCore import Qt, QCoreApplication, QMimeData, QTimer, QEvent, \
 		pyqtSignal
 	qt5 = True
@@ -31,7 +32,8 @@ else:
 	from PyQt4.QtGui import QTableWidget, QShortcut, QKeySequence, \
 		QApplication, QTableWidgetItem, QFont, QColor, QMenu, QAction, QIcon, \
 		QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QInputDialog, \
-		QBrush, QDrag, QPixmap, QStyledItemDelegate
+		QBrush, QDrag, QPixmap, QStyledItemDelegate, QFileDialog, QHeaderView, \
+		QLineEdit, QDialog, QFormLayout, QDialogButtonBox
 	from PyQt4.QtCore import Qt, QCoreApplication, QMimeData, QTimer, QEvent, \
 		pyqtSignal
 	qt5 = False
