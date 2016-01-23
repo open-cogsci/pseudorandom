@@ -17,37 +17,37 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from datamatrix.py3compat import *
 import time
 import random
-import itertools
-from dataframe.py3compat import *
-from dataframe._exceptions import EnforceFailed
+from pseudorandom._exceptions import EnforceFailed
+from datamatrix import operations
 
 class Enforce(object):
 
 	"""
 	desc:
 		A class that enforces a set of constraints by modifying (if necessary)
-		the `DataFrame`.
+		the DataMatrix.
 	"""
 
-	def __init__(self, df):
+	def __init__(self, dm):
 
 		"""
 		desc:
 			Constructor.
 
 		arguments:
-			df:
+			dm:
 				desc:	The data.
-				type:	DataFrame
+				type:	DataMatrix
 		"""
 
-		self.df = df.copy()
+		self.dm = dm[:]
 		self.constraints = []
 		self.report = None
 
-	def addConstraint(self, constraint, **kwargs):
+	def add_constraint(self, constraint, **kwargs):
 
 		"""
 		desc:
@@ -64,52 +64,55 @@ class Enforce(object):
 						constructor.
 		"""
 
-		self.constraints.append(constraint([self.df], **kwargs))
+		self.constraints.append(constraint(self, **kwargs))
 
 	def _enforce(self, reverse=False):
 
 		redo = False
-		_range = self.df.range
+		_range = range(len(self.dm))
 		if reverse:
 			_range = reversed(_range)
 		for row in _range:
 			if not self.ok(row):
 				redo = True
 				if reverse:
-					heapRange = list(range(row+1, len(self.df)))
+					heaprange = list(range(row+1, len(self.dm)))
 				else:
-					heapRange = list(range(row))
-				random.shuffle(heapRange)
-				for heapRow in heapRange:
-					_df = self.df.copy()
-					self.df.swapRows(row, heapRow)
+					heaprange = list(range(row))
+				random.shuffle(heaprange)
+				for heaprow in heaprange:
+					import copy
+					# _dm = copy.deepcopy(self.dm)
+					_dm = self.dm[:]
+					for name, col in self.dm.columns:
+						col[row, heaprow] = col[heaprow, row]
 					if self.ok(row):
 						break
-					self.df.data = _df.data
+					self.dm = _dm
 		return redo
 
-	def enforce(self, maxReshuffle=100, maxPass=100):
+	def enforce(self, maxreshuffle=100, maxpass=100):
 
 		"""
 		desc:
 			Enforces constraints.
 
 		keywords:
-			maxPass:
+			maxpass:
 				desc:	The maximum number of times that the enforce algorithm
 						may be restarted.
 				type:	int
 
 		returns:
-			desc:	A `DataFrame` that respects the constraints.
-			type:	DataFrame
+			desc:	A `DataMatrix` that respects the constraints.
+			type:	DataMatrix
 		"""
 
 		t0 = time.time()
 		reverse = False
-		for i in range(maxReshuffle):
-			self.df.shuffle()
-			for j in range(maxPass):
+		for i in range(maxreshuffle):
+			self.dm = operations.shuffle(self.dm)
+			for j in range(maxpass):
 				if not self._enforce(reverse=reverse):
 					break
 				reverse = not reverse
@@ -120,14 +123,14 @@ class Enforce(object):
 			break
 		else:
 			raise EnforceFailed(
-				u'Failed to enforce constraints (maxReshuffle = %d)' \
-				% maxReshuffle)
+				u'Failed to enforce constraints (maxreshuffle = %d)' \
+				% maxreshuffle)
 		t1 = time.time()
 		self.report = {
 			u'time'			: t1-t0,
 			u'reshuffle'	: i+1,
 			}
-		return self.df
+		return self.dm
 
 	def ok(self, row):
 

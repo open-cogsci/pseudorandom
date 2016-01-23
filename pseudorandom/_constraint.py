@@ -17,16 +17,24 @@ You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from dataframe._exceptions import InvalidConstraint
+from datamatrix.py3compat import *
+from pseudorandom._exceptions import InvalidConstraint
 
 class Constraint(object):
 
-	def __init__(self, ldf, **kwargs):
+	def __init__(self, enforce, **kwargs):
 
-		self.df = ldf[0]
+		self.enforce = enforce
 		self.init(**kwargs)
 
-	def ok(self, df, row):
+	def setcols(self, cols):
+
+		if cols is None:
+			self.cols = self.dm.column_names
+		else:
+			self.cols = [name for name, col in self.dm.columns if col in cols]
+
+	def ok(self, row):
 
 		raise NotImplementedError
 
@@ -35,37 +43,43 @@ class Constraint(object):
 
 		return len(set(l))
 
+	@property
+	def dm(self):
+
+		return self.enforce.dm
+
 class MaxRep(Constraint):
 
 	"""
 	desc:
 		Limits the number of times that a value can occur in direct succession.
-		A maxRep of 1 means that values cannot be repeated.
+		A maxrep of 1 means that values cannot be repeated.
 
 	example: |
 		ef = Enforce(df)
-		ef.addConstraint(MaxRep, cols=['word'], maxRep=2)
+		ef.add_constraint(MaxRep, cols=['word'], maxrep=2)
 	"""
 
-	def init(self, cols=None, maxRep=1):
+	def init(self, cols=None, maxrep=1):
 
-		if maxRep < 1:
-			raise InvalidConstraint(u'maxRep should be >= 1')
-		self.maxRep = maxRep
-		self.cols = self.df.getCols(cols)
+		if maxrep < 1:
+			raise InvalidConstraint(u'maxrep should be >= 1')
+		self.maxrep = maxrep
+		self.setcols(cols)
 
 	def ok(self, row):
 
-		if row < self.maxRep:
+		if row < self.maxrep:
 			return True
-		for col in self.cols:
+		for colname in self.cols:
+			col = self.dm[colname]
 			# We only check for preceding repetitions. I.e. in the string:
 			# AABABBB
 			# The number of repetitions would be:
 			# 1211123
-			if row < self.maxRep:
+			if row < self.maxrep:
 				continue
-			l = self.df.data[col][row-self.maxRep:row+1]
+			l = col[row-self.maxrep:row+1]
 			if self.count(l) == 1:
 				return False
 		return True
@@ -78,22 +92,24 @@ class MinDist(Constraint):
 		2 avoids direct repetitions.
 
 	example: |
-		ef = Enforce(df)
-		ef.addConstraint(MinDist, cols=['word'], minDist=2)
+		ef = Enforce(dm)
+		ef.add_constraint(MinDist, cols=['word'], mindist=2)
 	"""
 
-	def init(self, cols=None, minDist=2):
+	def init(self, cols=None, mindist=2):
 
-		if minDist < 2:
-			raise InvalidConstraint(u'minDist should be >= 2')
-		self.minDist = minDist
-		self.cols = self.df.getCols(cols)
+		if mindist < 2:
+			raise InvalidConstraint(u'mindist should be >= 2')
+		self.mindist = mindist
+		self.setcols(cols)
 
 	def ok(self, row):
 
-		for col in self.cols:
-			l = self.df.data[col][row-self.minDist+1:row] \
-				+ self.df.data[col][row+1:row+self.minDist]
-			if self.df.data[col][row] in l:
+		for colname in self.cols:
+			col = self.dm[colname]
+			context = list(col[row-self.mindist+1:row]) \
+				+ list(col[row+1:row+self.mindist])
+			target = col[row]
+			if target in context:
 				return False
 		return True

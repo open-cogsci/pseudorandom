@@ -19,10 +19,10 @@ along with academicmarkdown.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import yamldoc
-import dataframe
+import pseudorandom
 import academicmarkdown
 
-df = yamldoc.DocFactory(dataframe)
+df = yamldoc.DocFactory(pseudorandom)
 academicmarkdown.build.postMarkdownFilters = []
 academicmarkdown.build.MD(unicode(df), u'readme.md')
 academicmarkdown.build.PDF(unicode(df), u'readme.pdf')

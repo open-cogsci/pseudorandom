@@ -19,9 +19,8 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
-from dataframe import tools, DataFrame, Enforce, MaxRep, MinDist
-from dataframe.py3compat import _basestring
-import pandas as pd
+from datamatrix import io
+from pseudorandom import Enforce, MaxRep, MinDist
 
 class PseudoRandomTest(unittest.TestCase):
 
@@ -32,40 +31,27 @@ class PseudoRandomTest(unittest.TestCase):
 
 	def setUp(self):
 
-		pdf = pd.read_csv('examples/data.csv')
-		self.df = tools.fromPandas(pdf)
-
-	def test_slicing(self):
-
-		# Test basic slicing
-		self.assertTrue(self.df['word', :4] == self.df['word'][:4])
-		self.assertTrue(self.df['word', :4] == self.df[:4, 'word'])
-		self.assertTrue(self.df['word', :4] != self.df['word'][:5])
-		self.assertTrue(self.df['word', :4] != self.df['category'][:4])
-		# Check whether the correct DataTypes are returned
-		self.assertTrue(isinstance(self.df['word', 0:1], DataFrame))
-		self.assertTrue(isinstance(self.df['word', 0], _basestring))
-		# Test iterator
-		self.assertTrue(list(self.df['word', :4]) == 4*['cat'])
-		# Test cell slicing
-		self.df['firstLetter'] = self.df['word', :, :1]
-		self.assertTrue(self.df['firstLetter', 0] == 'c')
+		self.dm = io.readtxt('examples/data.csv')
 
 	def test_constraintMaxRep(self):
 
-		ef = Enforce(self.df)
-		ef.addConstraint(MaxRep, maxRep=1)
-		df = ef.enforce()
-		for row in df.range[1:]:
-			self.assertTrue(df[row] != df[row-1])
+		self.setUp()
+		ef = Enforce(self.dm)
+		ef.add_constraint(MaxRep, maxrep=1)
+		dm = ef.enforce()
+		for row in range(len(dm)):
+			for cell1, cell2 in zip(dm[row], dm[row-1]):
+				self.assertTrue(cell1 != cell2)
 
 	def test_constraintMinDist(self):
 
-		ef = Enforce(self.df)
-		ef.addConstraint(MinDist, cols=['word'], minDist=3)
-		df = ef.enforce()
-		for row in df.range[3:]:
-			s = set(df['word', row-3:row])
+		self.setUp()
+		ef = Enforce(self.dm)
+		ef.add_constraint(MinDist, cols=self.dm.word, mindist=3)
+		dm = ef.enforce()
+		for row in range(3, len(dm)):
+			s = dm.word[row-3:row].unique
+			print(dm)
 			self.assertTrue(len(s) == 3)
 
 if __name__ == '__main__':
