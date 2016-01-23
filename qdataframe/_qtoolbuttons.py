@@ -31,7 +31,7 @@ class QToolButtons(QFrame):
 		self.layout.setContentsMargins(0, 0, 0, 0)
 		# Add menu
 		self.addButton = QPushButton(QIcon.fromTheme(u'list-add'),
-			_(u'Add'))
+			_(u'Add rows/ columns'))
 		self.addMenu = QMenu(self)
 		self.addRowAction = QAction(QIcon.fromTheme(
 			u'list-add'), _(u'Rows'), self.addMenu)

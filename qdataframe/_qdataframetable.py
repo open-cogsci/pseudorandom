@@ -124,9 +124,10 @@ class QDataFrameTable(QTableWidget):
 
 		col = self.df.cols[colNr]
 		item = self.item(row, colNr)
-		self.df.addUndoHistory()
+		self.df.startUndoAction()
 		DataFrame.setCell(self.df, (col, row), item.text())
 		item.updateStyle()
+		self.df.endUndoAction()
 
 	@disconnected
 	def onCurrentCellChanged(self, toRow, toCol, fromRow, fromCol):

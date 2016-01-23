@@ -54,6 +54,7 @@ class QDataFrame(DataFrame, QWidget):
 	"""
 
 	notify = pyqtSignal(_unicode)
+	changed = pyqtSignal()
 
 	def __init__(self, *arglist, **kwdict):
 
@@ -74,6 +75,9 @@ class QDataFrame(DataFrame, QWidget):
 		if u'parent' in kwdict:
 			parent = kwdict[u'parent']
 			del kwdict[u'parent']
+		elif len(arglist) > 0 and isinstance(arglist[0], QWidget):
+			parent = arglist[0]
+			arglist = arglist[1:]
 		else:
 			parent = None
 		if u'toolButtons' in kwdict and kwdict[u'toolButtons']:
@@ -148,6 +152,7 @@ class QDataFrame(DataFrame, QWidget):
 		"""
 
 		self.inUndoAction = False
+		self.changed.emit()
 
 	def clearUndo(self):
 
