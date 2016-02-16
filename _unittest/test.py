@@ -51,7 +51,6 @@ class PseudoRandomTest(unittest.TestCase):
 		dm = ef.enforce()
 		for row in range(3, len(dm)):
 			s = dm.word[row-3:row].unique
-			print(dm)
 			self.assertTrue(len(s) == 3)
 
 if __name__ == '__main__':
