@@ -18,16 +18,16 @@ You should have received a copy of the GNU General Public License
 along with zoteromarkdown.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from dataframe import __version__
+from pseudorandom import __version__
 from setuptools import setup, find_packages
 
 setup(
-	name=u'python-dataframe',
+	name=u'python-pseudorandom',
 	version=__version__,
 	description= u'A Python library for generating pseudorandom condition/ stimulus lists for psychological experiments',
 	author=u'Sebastiaan Mathôt',
 	author_email=u's.mathot@cogsci.nl',
 	license=u'GNU GPL Version 3',
-	url=u'https://github.com/smathot/python-dataframe',
+	url=u'https://github.com/smathot/python-random',
 	packages=find_packages('.')
 )
