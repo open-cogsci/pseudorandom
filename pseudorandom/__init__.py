@@ -15,43 +15,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
-
----
-desc: |
-	Copyright 2015-2016 Sebastiaan Mathôt
-
-	v%-- python: "import pseudorandom; print pseudorandom.__version__" --%
-
-	<http://www.cogsci.nl/smathot>
-
-	A package for pseudorandomization of DataMatrix objects. That is, it allows
-	you to apply certain constraints to the randomization.
-
-	Current unittest status: [![Build Status](https://travis-ci.org/smathot/python-pseudorandom.svg?branch=master)](https://travis-ci.org/smathot/python-pseudorandom)
-
-	## Example
-
-	~~~ .python
-	%-- include: "examples/example.py" --%
-	~~~
-
-	## Dependencies
-
-	- [python-datamatrix](https://github.com/smathot/python-datamatrix)
-
-	## License
-
-	`pseudorandom` is released under the GNU General Public License 3. See the
-	included file `COPYING` for details or visit
-	<http://www.gnu.org/copyleft/gpl.html>.
-
-	## Overview
-
-	%--
-	toc:
-		mindepth: 2
-	--%
----
 """
 
 __version__ = u'0.2.0'
