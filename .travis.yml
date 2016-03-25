@@ -3,4 +3,4 @@ python:
   - "2.7"
   - "3.4"
 install: pip install python-datamatrix
-script: _unittest/test.py
+script: nosetests _unittest/test.py

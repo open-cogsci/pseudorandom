@@ -20,13 +20,7 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from datamatrix import io
-try:
-	from pseudorandom import Enforce, MaxRep, MinDist
-except ImportError:
-	# This happens when the test script is executed from the _unittest folder
-	import os
-	os.chdir('..')
-	from pseudorandom import Enforce, MaxRep, MinDist
+from pseudorandom import Enforce, MaxRep, MinDist
 
 class PseudoRandomTest(unittest.TestCase):
 
