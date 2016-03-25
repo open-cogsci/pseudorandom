@@ -2,12 +2,5 @@ language: python
 python:
   - "2.7"
   - "3.4"
-before_install:
-  - wget https://github.com/smathot/python-datamatrix/archive/master.tar.gz
-  - tar -xvf master.tar.gz
-  - cd python-datamatrix-master
-  - python setup.py install
-  - cd ..
-install:
-  - python setup.py install
+install: pip install python-datamatrix
 script: _unittest/test.py

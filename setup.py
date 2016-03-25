@@ -29,5 +29,14 @@ setup(
 	author_email=u's.mathot@cogsci.nl',
 	license=u'GNU GPL Version 3',
 	url=u'https://github.com/smathot/python-random',
-	packages=find_packages('.')
+	packages=find_packages('.', exclude=['_unittest']),
+	install_requires=['python-datamatrix'],
+	classifiers=[
+		'Development Status :: 4 - Beta',
+		'Intended Audience :: Science/Research',
+		'Topic :: Scientific/Engineering',
+		 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+		'Programming Language :: Python :: 2',
+		'Programming Language :: Python :: 3',
+	],
 )
