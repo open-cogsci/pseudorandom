@@ -25,7 +25,7 @@ setup(
 	name=u'python-pseudorandom',
 	version=__version__,
 	description= u'A Python library for generating pseudorandom condition/ stimulus lists for psychological experiments',
-	author=u'Sebastiaan Mathôt',
+	author=u'Sebastiaan Mathot',
 	author_email=u's.mathot@cogsci.nl',
 	license=u'GNU GPL Version 3',
 	url=u'https://github.com/smathot/python-random',
