@@ -19,6 +19,7 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 from datamatrix.py3compat import *
 from pseudorandom._exceptions import InvalidConstraint
+from datamatrix._datamatrix._basecolumn import BaseColumn
 
 class Constraint(object):
 
@@ -31,8 +32,12 @@ class Constraint(object):
 
 		if cols is None:
 			self.cols = self.dm.column_names
+		elif isinstance(cols, BaseColumn):
+			self.cols = [cols.name]
 		else:
-			self.cols = [name for name, col in self.dm.columns if col in cols]
+			self.cols = [col.name for col in cols]
+		if not self.cols:
+			raise InvalidConstraint(u'No (valid) columns specified')
 
 	def ok(self, row):
 

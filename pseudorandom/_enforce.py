@@ -81,8 +81,6 @@ class Enforce(object):
 					heaprange = list(range(row))
 				random.shuffle(heaprange)
 				for heaprow in heaprange:
-					import copy
-					# _dm = copy.deepcopy(self.dm)
 					_dm = self.dm[:]
 					for name, col in self.dm.columns:
 						col[row, heaprow] = col[heaprow, row]

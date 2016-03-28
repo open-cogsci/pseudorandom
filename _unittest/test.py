@@ -47,7 +47,7 @@ class PseudoRandomTest(unittest.TestCase):
 
 		self.setUp()
 		ef = Enforce(self.dm)
-		ef.add_constraint(MinDist, cols=self.dm.word, mindist=3)
+		ef.add_constraint(MinDist, cols=[self.dm.word], mindist=3)
 		dm = ef.enforce()
 		for row in range(3, len(dm)):
 			s = dm.word[row-3:row].unique
