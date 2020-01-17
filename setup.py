@@ -28,7 +28,7 @@ setup(
 	author=u'Sebastiaan Mathot',
 	author_email=u's.mathot@cogsci.nl',
 	license=u'GNU GPL Version 3',
-	url=u'https://github.com/smathot/python-random',
+	url=u'https://github.com/smathot/python-pseudorandom',
 	packages=find_packages('.', exclude=['_unittest']),
 	install_requires=['python-datamatrix'],
 	classifiers=[
