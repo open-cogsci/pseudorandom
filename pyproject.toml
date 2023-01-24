@@ -2,7 +2,7 @@
 requires = ["flit_core >=3.4"]
 build-backend = "flit_core.buildapi"
 [project]
-name = "pseudorandom"
+name = "python-pseudorandom"
 authors = [
     {name = "Sebastiaan Mathôt", email = "s.mathot@cogsci.nl"}
 ]
@@ -12,6 +12,8 @@ requires-python = ">=3.7"
 dynamic = ["version", "description"]
 dependencies = ["datamatrix"]
 keywords = ["pseudorandomization", "datamatrix", "opensesame", "experimental design"]
+[tool.flit.module]
+name = "pseudorandom"
 [tool.flit.sdist]
 exclude = [".github"]
 [project.urls]
