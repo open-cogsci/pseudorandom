@@ -20,38 +20,33 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from datamatrix import io
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from pseudorandom import Enforce, MaxRep, MinDist
 
-class PseudoRandomTest(unittest.TestCase):
 
-	"""
-	desc:
-		Basic unit testing for pseudorandom.
-	"""
+def test_constraintMaxRep():
 
-	def setUp(self):
+    dm = io.readtxt('examples/data.csv')
+    ef = Enforce(dm)
+    ef.add_constraint(MaxRep, maxrep=1)
+    dm = ef.enforce()
+    for row in range(len(dm)):
+        for cell1, cell2 in zip(dm[row], dm[row-1]):
+            assert cell1 != cell2
 
-		self.dm = io.readtxt('examples/data.csv')
 
-	def test_constraintMaxRep(self):
+def test_constraintMinDist():
 
-		self.setUp()
-		ef = Enforce(self.dm)
-		ef.add_constraint(MaxRep, maxrep=1)
-		dm = ef.enforce()
-		for row in range(len(dm)):
-			for cell1, cell2 in zip(dm[row], dm[row-1]):
-				self.assertTrue(cell1 != cell2)
+    dm = io.readtxt('examples/data.csv')
+    ef = Enforce(dm)
+    ef.add_constraint(MinDist, cols=[dm.word], mindist=3)
+    dm = ef.enforce()
+    for row in range(3, len(dm)):
+        s = dm.word[row-3:row].unique
+        assert len(s) == 3
 
-	def test_constraintMinDist(self):
-
-		self.setUp()
-		ef = Enforce(self.dm)
-		ef.add_constraint(MinDist, cols=[self.dm.word], mindist=3)
-		dm = ef.enforce()
-		for row in range(3, len(dm)):
-			s = dm.word[row-3:row].unique
-			self.assertTrue(len(s) == 3)
 
 if __name__ == '__main__':
-	unittest.main()
+    unittest.main()

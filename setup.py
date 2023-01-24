@@ -22,21 +22,21 @@ from pseudorandom import __version__
 from setuptools import setup, find_packages
 
 setup(
-	name=u'python-pseudorandom',
-	version=__version__,
-	description= u'A Python library for generating pseudorandom condition/ stimulus lists for psychological experiments',
-	author=u'Sebastiaan Mathot',
-	author_email=u's.mathot@cogsci.nl',
-	license=u'GNU GPL Version 3',
-	url=u'https://github.com/smathot/python-random',
-	packages=find_packages('.', exclude=['_unittest']),
-	install_requires=['python-datamatrix'],
-	classifiers=[
-		'Development Status :: 4 - Beta',
-		'Intended Audience :: Science/Research',
-		'Topic :: Scientific/Engineering',
-		 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-		'Programming Language :: Python :: 2',
-		'Programming Language :: Python :: 3',
-	],
+    name='pseudorandom',
+    version=__version__,
+    description= 'A Python library for generating pseudorandom condition/ stimulus lists for psychological experiments',
+    author='Sebastiaan Mathot',
+    author_email='s.mathot@cogsci.nl',
+    license='GNU GPL Version 3',
+    url='https://github.com/open-cogsci/pseudorandom',
+    packages=find_packages('.', exclude=['testcases']),
+    install_requires=['datamatrix'],
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering',
+         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+    ],
 )

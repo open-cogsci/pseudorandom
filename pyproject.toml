@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core >=3.4"]
+build-backend = "flit_core.buildapi"
+[project]
+name = "pseudorandom"
+authors = [
+    {name = "Sebastiaan Mathôt", email = "s.mathot@cogsci.nl"}
+]
+readme = "readme.md"
+license = {file = "COPYING"}
+requires-python = ">=3.7"
+dynamic = ["version", "description"]
+dependencies = ["datamatrix"]
+keywords = ["pseudorandomization", "datamatrix", "opensesame", "experimental design"]
+[tool.flit.sdist]
+exclude = [".github"]
+[project.urls]
+Documentation = "https://github.com/open-cogsci/pseudorandom"
+Source = "https://github.com/open-cogsci/pseudorandom"

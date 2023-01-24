@@ -1,16 +1,11 @@
-# pseudorandom
+# Python Pseudorandom
 
-Copyright 2015-2016 Sebastiaan Mathôt
-
-v0.2.0
-
-
-<http://www.cogsci.nl/smathot>
+Copyright 2015-2023 [Sebastiaan Mathôt](https://www.cogsci.nl/smathot)
 
 A package for pseudorandomization of DataMatrix objects. That is, it allows
-you to apply certain constraints to the randomization.
-
-Current unittest status: [![Build Status](https://travis-ci.org/smathot/python-pseudorandom.svg?branch=master)](https://travis-ci.org/smathot/python-pseudorandom)
+you to apply certain constraints to the randomization. The main purpose of this
+package is to implement constrained loop randomization in OpenSesame, a
+graphical experiment builder for the social sciences.
 
 ## Example
 
@@ -18,7 +13,7 @@ See `examples/example.py`.
 
 ## Dependencies
 
-- [python-datamatrix](https://github.com/smathot/python-datamatrix)
+- [datamatrix](https://github.com/open-cogsci/datamatrix)
 
 ## License
 

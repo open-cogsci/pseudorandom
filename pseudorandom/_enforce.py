@@ -23,113 +23,114 @@ import random
 from pseudorandom._exceptions import EnforceFailed
 from datamatrix import operations
 
+
 class Enforce(object):
 
-	"""
-	desc:
-		A class that enforces a set of constraints by modifying (if necessary)
-		the DataMatrix.
-	"""
+    """
+    desc:
+        A class that enforces a set of constraints by modifying (if necessary)
+        the DataMatrix.
+    """
 
-	def __init__(self, dm):
+    def __init__(self, dm):
 
-		"""
-		desc:
-			Constructor.
+        """
+        desc:
+            Constructor.
 
-		arguments:
-			dm:
-				desc:	The data.
-				type:	DataMatrix
-		"""
+        arguments:
+            dm:
+                desc:	The data.
+                type:	DataMatrix
+        """
 
-		self.dm = dm[:]
-		self.constraints = []
-		self.report = None
+        self.dm = dm[:]
+        self.constraints = []
+        self.report = None
 
-	def add_constraint(self, constraint, **kwargs):
+    def add_constraint(self, constraint, **kwargs):
 
-		"""
-		desc:
-			Adds a constraint to enforce.
+        """
+        desc:
+            Adds a constraint to enforce.
 
-		arguments:
-			constraint:
-				desc:	A constraint class. Note, the class itself should be
-						passed, not an instance of the class.
-				type:	type
+        arguments:
+            constraint:
+                desc:	A constraint class. Note, the class itself should be
+                        passed, not an instance of the class.
+                type:	type
 
-		keyword-dict:
-			kwargs:		The keyword arguments that are passed to the constraint
-						constructor.
-		"""
+        keyword-dict:
+            kwargs:		The keyword arguments that are passed to the constraint
+                        constructor.
+        """
 
-		self.constraints.append(constraint(self, **kwargs))
+        self.constraints.append(constraint(self, **kwargs))
 
-	def _enforce(self, reverse=False):
+    def _enforce(self, reverse=False):
 
-		redo = False
-		_range = range(len(self.dm))
-		if reverse:
-			_range = reversed(_range)
-		for row in _range:
-			if not self.ok(row):
-				redo = True
-				if reverse:
-					heaprange = list(range(row+1, len(self.dm)))
-				else:
-					heaprange = list(range(row))
-				random.shuffle(heaprange)
-				for heaprow in heaprange:
-					_dm = self.dm[:]
-					for name, col in self.dm.columns:
-						col[row, heaprow] = col[heaprow, row]
-					if self.ok(row):
-						break
-					self.dm = _dm
-		return redo
+        redo = False
+        _range = range(len(self.dm))
+        if reverse:
+            _range = reversed(_range)
+        for row in _range:
+            if not self.ok(row):
+                redo = True
+                if reverse:
+                    heaprange = list(range(row+1, len(self.dm)))
+                else:
+                    heaprange = list(range(row))
+                random.shuffle(heaprange)
+                for heaprow in heaprange:
+                    _dm = self.dm[:]
+                    for name, col in self.dm.columns:
+                        col[row, heaprow] = col[heaprow, row]
+                    if self.ok(row):
+                        break
+                    self.dm = _dm
+        return redo
 
-	def enforce(self, maxreshuffle=100, maxpass=100):
+    def enforce(self, maxreshuffle=100, maxpass=100):
 
-		"""
-		desc:
-			Enforces constraints.
+        """
+        desc:
+            Enforces constraints.
 
-		keywords:
-			maxpass:
-				desc:	The maximum number of times that the enforce algorithm
-						may be restarted.
-				type:	int
+        keywords:
+            maxpass:
+                desc:	The maximum number of times that the enforce algorithm
+                        may be restarted.
+                type:	int
 
-		returns:
-			desc:	A `DataMatrix` that respects the constraints.
-			type:	DataMatrix
-		"""
+        returns:
+            desc:	A `DataMatrix` that respects the constraints.
+            type:	DataMatrix
+        """
 
-		t0 = time.time()
-		reverse = False
-		for i in range(maxreshuffle):
-			self.dm = operations.shuffle(self.dm)
-			for j in range(maxpass):
-				if not self._enforce(reverse=reverse):
-					break
-				reverse = not reverse
-			else:
-				# If the maximum passes were exhausted, restart the loop
-				continue
-			# If the maximum passes were not exhausted, we are done
-			break
-		else:
-			raise EnforceFailed(
-				u'Failed to enforce constraints (maxreshuffle = %d)' \
-				% maxreshuffle)
-		t1 = time.time()
-		self.report = {
-			u'time'			: t1-t0,
-			u'reshuffle'	: i+1,
-			}
-		return self.dm
+        t0 = time.time()
+        reverse = False
+        for i in range(maxreshuffle):
+            self.dm = operations.shuffle(self.dm)
+            for j in range(maxpass):
+                if not self._enforce(reverse=reverse):
+                    break
+                reverse = not reverse
+            else:
+                # If the maximum passes were exhausted, restart the loop
+                continue
+            # If the maximum passes were not exhausted, we are done
+            break
+        else:
+            raise EnforceFailed(
+                u'Failed to enforce constraints (maxreshuffle = %d)' \
+                % maxreshuffle)
+        t1 = time.time()
+        self.report = {
+            u'time'			: t1-t0,
+            u'reshuffle'	: i+1,
+            }
+        return self.dm
 
-	def ok(self, row):
+    def ok(self, row):
 
-		return all([constraint.ok(row) for constraint in self.constraints])
+        return all([constraint.ok(row) for constraint in self.constraints])

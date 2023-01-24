@@ -18,7 +18,8 @@ along with pseudorandom.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 class InvalidConstraint(Exception):
-	pass
+    pass
+
 
 class EnforceFailed(Exception):
-	pass
+    pass
